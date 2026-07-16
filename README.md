@@ -1,4 +1,3 @@
-![Uploading Screenshot 2026-07-15 at 10.03.42 AM.png…]()
 # Breath Mirror
 
 A browser-based "mirror" that fogs up when you breathe on it, and clears with your hands — no install, single HTML file, powered by [MediaPipe Hands](https://github.com/google-ai-edge/mediapipe) for hand tracking and the Web Audio API for breath detection.
