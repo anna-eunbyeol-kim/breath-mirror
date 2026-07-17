@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Breath Mirror</title>
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/npm/pretendard@latest/dist/web/static/pretendard.css" />
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { background: #000; overflow: hidden; width: 100vw; height: 100vh; cursor: none; }
@@ -34,13 +35,13 @@
   #status {
     position: fixed; bottom: 164px; left: 50%; transform: translateX(-50%);
     color: rgba(255,255,255,0.4); font-size: 11px; letter-spacing: 0.18em;
-    text-transform: uppercase; font-family: Georgia, serif;
+    text-transform: uppercase; font-family: 'Pretendard', sans-serif; font-weight: 700;
     pointer-events: none; white-space: nowrap; z-index: 50;
   }
 
   #countdown {
     position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-    font-size: 140px; font-family: Georgia, serif;
+    font-size: 140px; font-family: 'Pretendard', sans-serif; font-weight: 700;
     color: rgba(255,255,255,0.9); text-shadow: 0 0 40px rgba(255,255,255,0.4);
     pointer-events: none; z-index: 60; opacity: 0; transition: opacity 0.2s;
   }
@@ -51,7 +52,7 @@
     background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.4);
     color: rgba(255,255,255,0.9); padding: 8px 16px; font-size: 11px;
     letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer;
-    border-radius: 4px; font-family: Georgia, serif; transition: all 0.15s;
+    border-radius: 4px; font-family: 'Pretendard', sans-serif; font-weight: 700; transition: all 0.15s;
     backdrop-filter: blur(6px);
   }
   #btnGroup button:hover { background: rgba(255,255,255,0.2); }
@@ -76,20 +77,13 @@
   .save-btn {
     position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
     background: rgba(0,0,0,0.55); color: white; font-size: 10px;
-    letter-spacing: 0.1em; font-family: Georgia, serif; text-transform: uppercase;
+    letter-spacing: 0.1em; font-family: 'Pretendard', sans-serif; font-weight: 700; text-transform: uppercase;
     opacity: 0; transition: opacity 0.15s;
   }
   .photo-thumb:hover .save-btn { opacity: 1; }
   @keyframes thumbIn { from { opacity:0; transform:scale(0.8) translateY(10px); } to { opacity:1; transform:scale(1); } }
 
   #flash { position: fixed; inset: 0; z-index: 200; background: white; opacity: 0; pointer-events: none; }
-
-  #wipeFlash {
-    position: fixed; inset: 0; z-index: 199; pointer-events: none;
-    background: radial-gradient(circle, rgba(210,225,235,0.55), rgba(210,225,235,0) 70%);
-    opacity: 0; transition: opacity 0.3s ease-out;
-  }
-  #wipeFlash.show { opacity: 1; }
 </style>
 </head>
 <body>
@@ -110,10 +104,10 @@
 </div>
 <div id="photoStrip"></div>
 <div id="flash"></div>
-<div id="wipeFlash"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
 <script>
 const video        = document.getElementById('video');
 const cameraCanvas = document.getElementById('cameraCanvas');
@@ -128,7 +122,6 @@ const cursor       = document.getElementById('cursor');
 const statusEl     = document.getElementById('status');
 const breathRing   = document.getElementById('breathRing');
 const flashEl      = document.getElementById('flash');
-const wipeFlashEl  = document.getElementById('wipeFlash');
 const countdownEl  = document.getElementById('countdown');
 const photoStrip   = document.getElementById('photoStrip');
 
@@ -176,15 +169,27 @@ function render() {
 }
 
 // ── Fog ───────────────────────────────────────────────────────────────
-let breathCooldown = 0;
-function addFog(volume) {
-  if (breathCooldown > 0) { breathCooldown--; return; }
+const FOG_COOLDOWN_MS = 1000; // keep a wiped/breathed-on area stable for ~1s before new fog can land on it
+const FOG_LIFETIME_MS = 60000; // fog fades itself out ~1 min after the last breath
+let nextFogAllowedAt = 0;
+let fogFadeTimer = null;
+
+function scheduleFogFade() {
+  clearTimeout(fogFadeTimer);
+  fogFadeTimer = setTimeout(() => { resetFog(); setStatus('blow on the screen'); }, FOG_LIFETIME_MS);
+}
+
+function addFog(intensity) {
+  const now = Date.now();
+  if (now < nextFogAllowedAt) return;
+  nextFogAllowedAt = now + FOG_COOLDOWN_MS;
   fogReady = true;
+  scheduleFogFade();
   for (let i = 0; i < 3 + Math.floor(Math.random()*3); i++) {
     const cx = W*0.5 + (Math.random()-0.5)*W*0.6;
     const cy = H*0.5 + (Math.random()-0.5)*H*0.3;
-    const r  = 100 + Math.random()*200 + volume*600;
-    const a  = Math.min(1, 0.4 + volume*4);
+    const r  = 100 + Math.random()*200 + intensity*600;
+    const a  = Math.min(1, 0.4 + intensity*4);
     const g  = maskCtx.createRadialGradient(cx,cy,0,cx,cy,r);
     g.addColorStop(0, `rgba(255,255,255,${a})`);
     g.addColorStop(0.5, `rgba(255,255,255,${a*0.65})`);
@@ -195,7 +200,6 @@ function addFog(volume) {
     maskCtx.beginPath(); maskCtx.arc(cx,cy,r,0,Math.PI*2); maskCtx.fill();
     maskCtx.restore();
   }
-  breathCooldown = 4;
   if (!countingDown) setStatus('pinch to draw');
 }
 
@@ -246,24 +250,12 @@ function undo() {
   maskCtx.putImageData(undoStack.pop(), 0, 0);
 }
 
-// ── Fog reset (shared by clear button + fist gesture) ────────────────
+// ── Fog reset (used by the clear button, and by the auto-fade timeout) ─
 function resetFog() {
+  clearTimeout(fogFadeTimer);
   maskCtx.clearRect(0, 0, W, H);
   fogReady = false;
   resetDraw();
-}
-
-function playWipeFlash() {
-  wipeFlashEl.classList.remove('show'); void wipeFlashEl.offsetWidth;
-  wipeFlashEl.classList.add('show');
-  setTimeout(() => wipeFlashEl.classList.remove('show'), 180);
-}
-
-function wipeClear() {
-  saveSnapshot();
-  resetFog();
-  playWipeFlash();
-  setStatus('wiped!', 900);
 }
 
 // ── Capture ───────────────────────────────────────────────────────────
@@ -275,18 +267,6 @@ function isLShape(lm) {
          Math.abs(lm[4].x - lm[2].x) > 0.04 &&
          lm[12].y > lm[10].y &&
          lm[16].y > lm[14].y;
-}
-
-// Fist: all four fingers curled (tip below its PIP joint), thumb tucked
-// toward the pinky-MCP. Mutually exclusive with isLShape (which requires
-// the index finger extended), so the two gestures can never collide.
-function isFist(lm) {
-  const indexCurled  = lm[8].y  > lm[6].y;
-  const middleCurled = lm[12].y > lm[10].y;
-  const ringCurled   = lm[16].y > lm[14].y;
-  const pinkyCurled  = lm[20].y > lm[18].y;
-  const thumbTucked  = Math.hypot(lm[4].x - lm[17].x, lm[4].y - lm[17].y) < 0.12; // tune if needed
-  return indexCurled && middleCurled && ringCurled && pinkyCurled && thumbTucked;
 }
 
 function drawCaptureFrame(lm1, lm2, progress) {
@@ -365,28 +345,8 @@ function doCapture() {
 const hands = new Hands({ locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}` });
 hands.setOptions({ maxNumHands:2, modelComplexity:1, minDetectionConfidence:0.6, minTrackingConfidence:0.5 });
 
-const FIST_HOLD_MS = 200; // snappier than the L-shape capture hold — feels instant
-let fistHoldStart = null, fistArmed = true;
-
 hands.onResults(results => {
   const all = results.multiHandLandmarks || [];
-
-  // FIST CLEAR — preempts DRAW/CAPTURE for this frame if any hand is a fist
-  const fistDetected = !countingDown && fogReady && all.some(isFist);
-  if (fistDetected) {
-    if (!fistHoldStart) fistHoldStart = Date.now();
-    if (Date.now() - fistHoldStart >= FIST_HOLD_MS && fistArmed) {
-      wipeClear();
-      fistArmed = false; // won't refire until the hand un-fists
-    }
-    cursor.style.opacity = '0';
-    isDrawingStroke = false; resetDraw();
-    if (holdStart) { holdStart = null; frameCtx.clearRect(0,0,W,H); }
-    return;
-  } else {
-    fistHoldStart = null;
-    fistArmed = true;
-  }
 
   // DRAW
   if (all.length >= 1 && !countingDown) {
@@ -428,6 +388,34 @@ hands.onResults(results => {
   }
 });
 
+// ── Face (mouth-open breath detection) ───────────────────────────────
+// Replaces mic-based detection: opening your mouth (as if blowing) fogs
+// the mirror instead of any ambient sound/talking triggering it.
+const MOUTH_OPEN_THRESHOLD = 0.35; // vertical lip gap / mouth width; raise if it over-triggers, lower if it under-triggers
+const faceMesh = new FaceMesh({ locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}` });
+faceMesh.setOptions({ maxNumFaces:4, refineLandmarks:false, minDetectionConfidence:0.6, minTrackingConfidence:0.5 });
+
+function mouthOpenRatio(lm) {
+  const vertical   = Math.hypot(lm[13].x - lm[14].x, lm[13].y - lm[14].y);
+  const horizontal = Math.hypot(lm[61].x - lm[291].x, lm[61].y - lm[291].y);
+  return horizontal > 0 ? vertical / horizontal : 0;
+}
+
+// Track every tracked face, not just one — anyone in frame blowing
+// (e.g. a group in front of the mirror) fogs it up, not only one person.
+let mouthOpenTO = null;
+faceMesh.onResults(results => {
+  const faces = results.multiFaceLandmarks || [];
+  if (!faces.length) return;
+  const openRatios = faces.map(mouthOpenRatio).filter(r => r > MOUTH_OPEN_THRESHOLD);
+  if (openRatios.length) {
+    const maxRatio = Math.max(...openRatios);
+    addFog(Math.min(1, (maxRatio - MOUTH_OPEN_THRESHOLD) / 0.3) * 0.05);
+    breathRing.classList.add('active');
+    clearTimeout(mouthOpenTO); mouthOpenTO = setTimeout(() => breathRing.classList.remove('active'), 300);
+  }
+});
+
 // ── Camera ────────────────────────────────────────────────────────────
 async function startCamera() {
   try {
@@ -436,37 +424,15 @@ async function startCamera() {
     });
     video.srcObject = stream; await video.play();
     const mpCam = new Camera(video, {
-      onFrame: async () => { await hands.send({ image: video }); },
+      onFrame: async () => {
+        await hands.send({ image: video });
+        await faceMesh.send({ image: video });
+      },
       width: 1280, height: 720
     });
     mpCam.start(); resize(); render();
     setStatus('blow on the screen');
   } catch(e) { setStatus('camera access needed'); }
-}
-
-// ── Mic ───────────────────────────────────────────────────────────────
-async function startMic() {
-  try {
-    const ms = await navigator.mediaDevices.getUserMedia({ audio: true });
-    const ac = new AudioContext();
-    const src = ac.createMediaStreamSource(ms);
-    const hp = ac.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 800;
-    src.connect(hp);
-    const an = ac.createAnalyser(); an.fftSize = 512; hp.connect(an);
-    const buf = new Float32Array(an.frequencyBinCount);
-    let rTO = null;
-    (function tick() {
-      requestAnimationFrame(tick);
-      an.getFloatTimeDomainData(buf);
-      let s = 0; for (const v of buf) s += v*v;
-      const rms = Math.sqrt(s/buf.length);
-      if (rms > 0.014) {
-        addFog(rms);
-        breathRing.classList.add('active');
-        clearTimeout(rTO); rTO = setTimeout(() => breathRing.classList.remove('active'), 300);
-      }
-    })();
-  } catch(e) {}
 }
 
 // ── Buttons ───────────────────────────────────────────────────────────
@@ -477,7 +443,7 @@ document.getElementById('clearBtn').addEventListener('click', () => {
   setStatus('blow on the screen');
 });
 
-startCamera(); startMic();
+startCamera();
 </script>
 </body>
 </html>
