@@ -1,3 +1,4 @@
+<img width="1736" height="385" alt="breath-mirror" src="https://github.com/user-attachments/assets/15feb602-e2b2-431b-8c46-7f64e700fe24" />
 # Breath Mirror
 
 A browser-based "mirror" that fogs up when you open your mouth to blow on it, and clears with your hands — no install, single HTML file, powered by [MediaPipe Hands](https://github.com/google-ai-edge/mediapipe) for hand tracking and MediaPipe Face Mesh for open-mouth detection.
