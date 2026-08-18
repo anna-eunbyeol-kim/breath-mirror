@@ -175,27 +175,27 @@
 <div id="breathRing"></div>
 <div id="countdown"></div>
 <div id="btnGroup">
-  <button id="leaveBtn">💌 남기기</button>
+  <button id="leaveBtn">💌 leave note</button>
   <button id="undoBtn">↩ undo</button>
   <button id="clearBtn">✕ clear</button>
 </div>
 <div id="photoStrip"></div>
 <div id="flash"></div>
 
-<div id="connBadge">💙 연결됨</div>
+<div id="connBadge">💙 connected</div>
 <div id="lobby">
   <div class="lobby-card">
-    <h1>Breath Mirror <span>· 함께</span></h1>
-    <p class="sub">둘이 같은 유리창에 입김 불고,<br>손으로 닦아요</p>
+    <h1>Breath Mirror <span>· together</span></h1>
+    <p class="sub">Fog up the same glass and<br>wipe it clear, together</p>
     <div class="mycode">
-      <label>방 이름</label>
+      <label>Room name</label>
       <div class="join">
-        <input id="roomInput" placeholder="방 이름" autocomplete="off" autocapitalize="off" spellcheck="false" />
-        <button id="enterBtn">들어가기</button>
+        <input id="roomInput" placeholder="Room name" autocomplete="off" autocapitalize="off" spellcheck="false" />
+        <button id="enterBtn">Enter</button>
       </div>
-      <p class="hint">둘이 <b>같은 방 이름</b>을 입력하면 연결돼요.<br>이 이름을 남친에게 보내주세요.</p>
+      <p class="hint">Enter the <b>same room name</b> on both sides to connect.<br>Send this name to your partner.</p>
     </div>
-    <button id="soloBtn" class="solo">혼자 쓰기</button>
+    <button id="soloBtn" class="solo">Use solo</button>
     <div class="netstatus" id="netStatus"></div>
   </div>
 </div>
@@ -677,7 +677,7 @@ function setNetStatus(t) { if (netStatus) netStatus.textContent = t; }
 
 function onPeerConnected() {
   connected = true;
-  connBadge.textContent = '💙 함께 있는 중';
+  connBadge.textContent = '💙 here together';
   connBadge.classList.add('together');
   connBadge.classList.remove('away');
   connBadge.style.display = 'block';
@@ -693,12 +693,12 @@ window.__onTrysteroReady = () => {
 };
 
 function joinBreathRoom(code) {
-  if (!window.__joinRoom) { pendingCode = code; setNetStatus('연결 준비 중… 곧 시작돼요'); return; }
+  if (!window.__joinRoom) { pendingCode = code; setNetStatus('getting ready… one moment'); return; }
   if (room) { try { room.leave(); } catch (e) {} }
   currentRoom = code;
   savedNote = loadSavedNote(code);   // a note I left here before, to hand over on connect
   cloudFetchNote(code).then(showCloudNote);   // a note waiting for me from before
-  setNetStatus('상대를 기다리는 중…');
+  setNetStatus('waiting for your partner…');
   room = window.__joinRoom({ appId: 'breath-mirror-longdistance' }, code);
   const sig  = room.makeAction('sig');  sendSig  = sig[0];  sig[1](data => handleData(data));
   const pic  = room.makeAction('pic');  sendPic  = pic[0];  pic[1](data => onRemotePhoto(data));
@@ -706,7 +706,7 @@ function joinBreathRoom(code) {
   room.onPeerJoin(() => onPeerConnected());
   room.onPeerLeave(() => {
     connected = false;
-    connBadge.textContent = '· 잠시 떨어졌어요';
+    connBadge.textContent = '· away for now';
     connBadge.classList.remove('together');
     connBadge.classList.add('away');
   });
@@ -776,7 +776,7 @@ function loadSavedNote(room) {
 }
 
 // P2P: partner handed me their glass live
-function onRemoteNote(dataURL) { renderNoteDataURL(dataURL, '💌 남친이 남긴 유리예요'); }
+function onRemoteNote(dataURL) { renderNoteDataURL(dataURL, '💌 a note left for you'); }
 
 // Cloud: read/write the room's latest note (works even with no one online)
 function cloudSaveNote(room, dataURL) {
@@ -795,19 +795,19 @@ function showCloudNote(note) {
   const seenKey = 'bm-noteseen-' + (currentRoom || '');
   let lastSeen = 0; try { lastSeen = +(localStorage.getItem(seenKey) || 0); } catch (e) {}
   if (note.ts && note.ts <= lastSeen) return;                      // already shown before
-  renderNoteDataURL(note.data, '💌 남친이 남긴 유리예요');
+  renderNoteDataURL(note.data, '💌 a note left for you');
   try { localStorage.setItem(seenKey, String(note.ts || Date.now())); } catch (e) {}
 }
 
 function leaveNote() {
-  if (!fogReady) { setStatus('유리에 먼저 써주세요', 2000); return; }
+  if (!fogReady) { setStatus('write on the glass first', 2000); return; }
   const url = makeNoteDataURL();
   savedNote = url;
   try { localStorage.setItem('bm-note-' + (currentRoom || 'solo'), url); } catch (e) {}
   if (sendNote && connected) sendNote(url);       // instant, if they're online now
   cloudSaveNote(currentRoom || 'solo', url).then(ok => {
-    setStatus(ok ? '유리에 남겼어요 · 남친이 언제 켜도 보여요 💙'
-                 : (connected ? '남친에게 남겼어요 💙' : '유리에 남겨뒀어요 💙'), 4000);
+    setStatus(ok ? 'left on the glass · they’ll see it anytime 💙'
+                 : (connected ? 'sent to your partner 💙' : 'left on the glass 💙'), 4000);
   });
 }
 
@@ -815,7 +815,7 @@ function leaveNote() {
 const enterBtn = document.getElementById('enterBtn');
 enterBtn.addEventListener('click', () => {
   const code = (roomInput.value || '').trim();
-  if (!code) { setNetStatus('방 이름을 입력해 주세요'); return; }
+  if (!code) { setNetStatus('Please enter a room name'); return; }
   joinBreathRoom(code);
 });
 roomInput.addEventListener('keydown', e => { if (e.key === 'Enter') enterBtn.click(); });
@@ -826,7 +826,7 @@ document.getElementById('soloBtn').addEventListener('click', () => {
 
 // Suggest a room name so one person can just share it.
 roomInput.value = 'bm-' + Math.random().toString(36).slice(2, 7);
-setNetStatus('둘이 같은 방 이름을 입력하고 들어가기를 누르세요');
+setNetStatus('Enter the same room name on both sides, then press Enter');
 
 startCamera();
 </script>
