@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Breath Mirror</title>
+<title>Fogether</title>
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/npm/pretendard@latest/dist/web/static/pretendard.css" />
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: #000; overflow: hidden; width: 100vw; height: 100vh; cursor: none; }
-  #container { position: relative; width: 100vw; height: 100vh; }
+  body { background: #000; overflow: hidden; width: 100vw; height: 100vh; height: 100dvh; cursor: none; }
+  #container { position: relative; width: 100vw; height: 100vh; height: 100dvh; }
   video { position: absolute; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); opacity: 0; pointer-events: none; }
   canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
   #cameraCanvas { z-index: 1; }
@@ -42,7 +42,7 @@
 
   #countdown {
     position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-    font-size: 140px; font-family: 'Pretendard', sans-serif; font-weight: 700;
+    font-size: clamp(72px, 18vw, 140px); font-family: 'Pretendard', sans-serif; font-weight: 700;
     color: rgba(255,255,255,0.9); text-shadow: 0 0 40px rgba(255,255,255,0.4);
     pointer-events: none; z-index: 60; opacity: 0; transition: opacity 0.2s;
   }
@@ -85,6 +85,33 @@
   @keyframes thumbIn { from { opacity:0; transform:scale(0.8) translateY(10px); } to { opacity:1; transform:scale(1); } }
 
   #flash { position: fixed; inset: 0; z-index: 200; background: white; opacity: 0; pointer-events: none; }
+
+  /* ── A note left on the glass, shown as a photo card that stays ── */
+  #noteCard {
+    position: fixed; inset: 0; z-index: 210; display: flex; align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.55); backdrop-filter: blur(4px);
+    opacity: 0; transition: opacity 0.35s; pointer-events: none;
+  }
+  #noteCard.show { opacity: 1; pointer-events: auto; }
+  #noteCard .note-inner {
+    background: #fff; padding: 12px 12px 14px; border-radius: 6px;
+    box-shadow: 0 24px 70px rgba(0,0,0,0.55); max-width: min(86vw, 460px);
+    transform: scale(0.94) rotate(-1.5deg); transition: transform 0.35s;
+  }
+  #noteCard.show .note-inner { transform: scale(1) rotate(-1.5deg); }
+  #noteCard .note-tag {
+    font-family: 'Pretendard', sans-serif; font-weight: 700; font-size: 12px;
+    letter-spacing: 0.06em; color: #b0607a; text-align: center; padding: 4px 0 10px;
+  }
+  #noteCard.live .note-tag::after { content: ' · ● LIVE'; color: #d0356a; font-size: 10px; letter-spacing: 0.1em; }
+  #noteCard img { display: block; width: 100%; border-radius: 3px; }
+  #noteCard .note-actions { display: flex; gap: 8px; justify-content: center; margin-top: 12px; }
+  #noteCard .note-actions button {
+    font-family: 'Pretendard', sans-serif; font-weight: 700; font-size: 11px; letter-spacing: 0.08em;
+    text-transform: uppercase; padding: 7px 14px; border-radius: 5px; cursor: pointer;
+    border: 1px solid rgba(0,0,0,0.15); background: #f3f3f3; color: #333; transition: all 0.15s;
+  }
+  #noteCard .note-actions button:hover { background: #e6e6e6; }
 
   /* ── Long-distance: photos shared from partner ── */
   .photo-thumb.partner { border-color: rgba(150,190,225,0.85); }
@@ -159,6 +186,24 @@
   }
   #connBadge.together { border-color: rgba(210,225,235,0.65); animation: badgePulse 2.6s ease-in-out infinite; }
   #connBadge.away { border-color: rgba(255,180,185,0.45); color: rgba(255,222,224,0.9); animation: none; }
+
+  /* ── Mobile / small screens ── */
+  @media (max-width: 600px) {
+    #btnGroup { top: 12px; right: 12px; gap: 6px; }
+    #btnGroup button { padding: 7px 10px; font-size: 10px; letter-spacing: 0.06em; }
+    #connBadge { top: 12px; left: 12px; font-size: 10px; padding: 6px 10px; }
+    #status { bottom: 148px; font-size: 10px; letter-spacing: 0.12em; }
+    #breathRing { bottom: 100px; width: 40px; height: 40px; }
+    .lobby-card { padding: 24px 20px; }
+    #photoStrip { height: 72px; gap: 6px; padding: 6px 10px; }
+    .photo-thumb { height: 56px; }
+    #noteCard .note-inner { padding: 10px 10px 12px; }
+  }
+  @media (hover: none) {
+    /* touch devices have no hover — keep the photo save affordance visible */
+    .photo-thumb .save-btn { opacity: 0; }
+    .photo-thumb:active .save-btn { opacity: 1; }
+  }
 </style>
 </head>
 <body>
@@ -175,17 +220,28 @@
 <div id="breathRing"></div>
 <div id="countdown"></div>
 <div id="btnGroup">
-  <button id="leaveBtn">💌 leave note</button>
+  <button id="leaveBtn">💌 for you</button>
   <button id="undoBtn">↩ undo</button>
   <button id="clearBtn">✕ clear</button>
 </div>
 <div id="photoStrip"></div>
 <div id="flash"></div>
 
+<div id="noteCard" hidden>
+  <div class="note-inner">
+    <div class="note-tag">💌 left for you</div>
+    <img id="noteImg" alt="a note left for you" />
+    <div class="note-actions">
+      <button id="noteSave">↓ save</button>
+      <button id="noteClose">✕ close</button>
+    </div>
+  </div>
+</div>
+
 <div id="connBadge">💙 connected</div>
 <div id="lobby">
   <div class="lobby-card">
-    <h1>Breath Mirror <span>· together</span></h1>
+    <h1>Fogether<span> · for two</span></h1>
     <p class="sub">Fog up the same glass and<br>wipe it clear, together</p>
     <div class="mycode">
       <label>Room name</label>
@@ -254,15 +310,28 @@ function resize() {
 window.addEventListener('resize', resize);
 
 // ── Render ────────────────────────────────────────────────────────────
+// Draw the camera as "cover" (preserve aspect, crop overflow) instead of
+// stretching it to the window — otherwise faces distort when the window
+// aspect ratio differs from the camera's (esp. narrow desktop / portrait phone).
+function videoCoverRect() {
+  const vw = video.videoWidth, vh = video.videoHeight;
+  if (!vw || !vh) return { sx: 0, sy: 0, sw: vw, sh: vh };
+  const vAsp = vw / vh, cAsp = W / H;
+  let sw, sh;
+  if (vAsp > cAsp) { sh = vh; sw = vh * cAsp; } else { sw = vw; sh = vw / cAsp; }
+  return { sx: (vw - sw) / 2, sy: (vh - sh) / 2, sw, sh };
+}
+
 function render() {
   requestAnimationFrame(render);
   if (video.readyState < 2) return;
+  const r = videoCoverRect();
   camCtx.save(); camCtx.translate(W, 0); camCtx.scale(-1, 1);
-  camCtx.drawImage(video, 0, 0, W, H); camCtx.restore();
+  camCtx.drawImage(video, r.sx, r.sy, r.sw, r.sh, 0, 0, W, H); camCtx.restore();
   offCtx.save();
   offCtx.filter = 'blur(14px) brightness(1.05)';
   offCtx.translate(W, 0); offCtx.scale(-1, 1);
-  offCtx.drawImage(video, 0, 0, W, H); offCtx.restore();
+  offCtx.drawImage(video, r.sx, r.sy, r.sw, r.sh, 0, 0, W, H); offCtx.restore();
   offCtx.fillStyle = 'rgba(205,218,228,0.35)';
   offCtx.fillRect(0, 0, W, H);
   blurCtx.clearRect(0, 0, W, H);
@@ -428,9 +497,31 @@ function onRemoteWipe(nx, ny) {
 function onRemoteWipeEnd() { remoteTrail = []; }
 
 function resetDraw() {
-  if (localWiping) { localWiping = false; netSend({ t: 'wipeEnd' }); }
+  if (localWiping) { localWiping = false; netSend({ t: 'wipeEnd' }); captureStrokeClip(); }
   smoothX = null; smoothY = null;
   trail = []; lastDrawX = null; lastDrawY = null;
+}
+
+// ── Live note: a rolling ~1s buffer of the glass while you're drawing ──
+// Like an iPhone Live Photo — we keep the last second of frames so a note
+// can play back the moment you drew it, not just the final still.
+const LIVE_MS = 1000, LIVE_STEP_MS = 90, LIVE_W = 320;
+let liveBuffer = [];        // { t, url } rolling window of recent frames
+let lastLiveCapture = 0;
+let lastStrokeClip = null;  // frames[] captured at the end of the most recent stroke
+
+function recordLiveFrame() {
+  const now = Date.now();
+  if (now - lastLiveCapture < LIVE_STEP_MS) return;
+  lastLiveCapture = now;
+  liveBuffer.push({ t: now, url: composeGlass(LIVE_W).toDataURL('image/jpeg', 0.5) });
+  const cutoff = now - LIVE_MS - 250;
+  while (liveBuffer.length && liveBuffer[0].t < cutoff) liveBuffer.shift();
+}
+function captureStrokeClip() {
+  const now = Date.now();
+  const frames = liveBuffer.filter(f => f.t >= now - LIVE_MS).map(f => f.url);
+  if (frames.length >= 2) lastStrokeClip = frames;
 }
 
 // ── Undo ──────────────────────────────────────────────────────────────
@@ -533,7 +624,7 @@ function addPhotoThumb(url, fromPartner) {
   btn.addEventListener('click', e => {
     e.stopPropagation();
     const a = document.createElement('a');
-    a.href = url; a.download = `breath-mirror-${Date.now()}.png`; a.click();
+    a.href = url; a.download = `fogether-${Date.now()}.png`; a.click();
   });
   wrap.appendChild(img); wrap.appendChild(btn);
   if (fromPartner) {
@@ -576,6 +667,7 @@ hands.onResults(results => {
       cursor.classList.add('drawing');
       if (!isDrawingStroke) { saveSnapshot(); isDrawingStroke = true; }
       eraseAt(fx, fy);
+      recordLiveFrame();
       setStatus('drawing…');
       return;
     } else {
@@ -653,6 +745,14 @@ async function startCamera() {
 
 // ── Buttons ───────────────────────────────────────────────────────────
 document.getElementById('leaveBtn').addEventListener('click', leaveNote);
+document.getElementById('noteClose').addEventListener('click', () => {
+  const c = document.getElementById('noteCard'); c.classList.remove('show'); stopLivePlayback(); setTimeout(() => { c.hidden = true; }, 350);
+});
+document.getElementById('noteSave').addEventListener('click', () => {
+  const a = document.createElement('a');
+  a.href = document.getElementById('noteCard').dataset.url || '';
+  a.download = 'fogether-' + Date.now() + '.jpg'; a.click();
+});
 document.getElementById('undoBtn').addEventListener('click', undo);
 document.getElementById('clearBtn').addEventListener('click', () => {
   resetFog();
@@ -756,27 +856,59 @@ function myDeviceId() {
   return id || 'anon';
 }
 
-function makeNoteDataURL() {
-  const sw = Math.min(W, 900), sh = Math.max(1, Math.round(sw * H / W));
+// Compose the current glass — your face behind the frosted writing — into a photo.
+function composeGlass(maxW) {
+  const scale = maxW ? Math.min(1, maxW / W) : 1;
+  const sw = Math.max(1, Math.round(W * scale)), sh = Math.max(1, Math.round(H * scale));
   const c = document.createElement('canvas'); c.width = sw; c.height = sh;
-  c.getContext('2d').drawImage(maskCanvas, 0, 0, sw, sh);
-  return c.toDataURL('image/png');
+  const cx = c.getContext('2d');
+  cx.drawImage(cameraCanvas, 0, 0, sw, sh);
+  cx.drawImage(blurCanvas, 0, 0, sw, sh);
+  return c;
 }
-function renderNoteDataURL(dataURL, label) {
-  const img = new Image();
-  img.onload = () => {
-    maskCtx.drawImage(img, 0, 0, W, H);
-    fogReady = true; scheduleFogFade();
-    if (label) setStatus(label, 4000);
-  };
-  img.src = dataURL;
+
+// Parse a stored note: JSON payload {type,frames?,cover}, or a legacy plain dataURL.
+function parseNote(data) {
+  if (!data) return null;
+  if (typeof data === 'object') return data;
+  try { const o = JSON.parse(data); if (o && (o.cover || o.frames)) return o; } catch (e) {}
+  return { type: 'still', cover: data };
+}
+
+let liveTimer = null;
+function stopLivePlayback() { if (liveTimer) { clearInterval(liveTimer); liveTimer = null; } }
+function playLive(img, frames) {
+  let i = 0; img.src = frames[0];
+  liveTimer = setInterval(() => { i = (i + 1) % frames.length; img.src = frames[i]; }, LIVE_STEP_MS);
+}
+
+// Show a received note as a card that STAYS until dismissed (no fade).
+// A "live" note loops its last second like an iPhone Live Photo.
+function showNoteCard(data) {
+  const note = parseNote(data);
+  if (!note) return;
+  const card = document.getElementById('noteCard');
+  const img = document.getElementById('noteImg');
+  stopLivePlayback();
+  if (note.type === 'live' && note.frames && note.frames.length >= 2) {
+    card.dataset.url = note.cover || note.frames[note.frames.length - 1];
+    card.classList.add('live');
+    playLive(img, note.frames);
+  } else {
+    card.dataset.url = note.cover;
+    card.classList.remove('live');
+    img.src = note.cover;
+  }
+  card.hidden = false;
+  setTimeout(() => card.classList.add('show'), 20);
+  setStatus('💌 left for you', 3500);
 }
 function loadSavedNote(room) {
   try { return localStorage.getItem('bm-note-' + room) || null; } catch (e) { return null; }
 }
 
-// P2P: partner handed me their glass live
-function onRemoteNote(dataURL) { renderNoteDataURL(dataURL, '💌 a note left for you'); }
+// P2P: partner handed me their note live
+function onRemoteNote(dataURL) { showNoteCard(dataURL); }
 
 // Cloud: read/write the room's latest note (works even with no one online)
 function cloudSaveNote(room, dataURL) {
@@ -795,18 +927,30 @@ function showCloudNote(note) {
   const seenKey = 'bm-noteseen-' + (currentRoom || '');
   let lastSeen = 0; try { lastSeen = +(localStorage.getItem(seenKey) || 0); } catch (e) {}
   if (note.ts && note.ts <= lastSeen) return;                      // already shown before
-  renderNoteDataURL(note.data, '💌 a note left for you');
+  showNoteCard(note.data);
   try { localStorage.setItem(seenKey, String(note.ts || Date.now())); } catch (e) {}
 }
 
 function leaveNote() {
   if (!fogReady) { setStatus('write on the glass first', 2000); return; }
-  const url = makeNoteDataURL();
-  savedNote = url;
-  try { localStorage.setItem('bm-note-' + (currentRoom || 'solo'), url); } catch (e) {}
-  if (sendNote && connected) sendNote(url);       // instant, if they're online now
-  cloudSaveNote(currentRoom || 'solo', url).then(ok => {
-    setStatus(ok ? 'left on the glass · they’ll see it anytime 💙'
+  // a "live" note if you just drew (last ~1s of frames), else a still photo
+  let note = (lastStrokeClip && lastStrokeClip.length >= 2)
+    ? { v: 1, type: 'live', frames: lastStrokeClip.slice(), cover: lastStrokeClip[lastStrokeClip.length - 1] }
+    : { v: 1, type: 'still', cover: composeGlass(900).toDataURL('image/jpeg', 0.78) };
+  let payload = JSON.stringify(note);
+  // stay under the cloud size limit: thin frames first, then fall back to a still
+  while (note.type === 'live' && payload.length > 380000 && note.frames.length > 3) {
+    note.frames = note.frames.filter((_, i) => i % 2 === 0);
+    note.cover = note.frames[note.frames.length - 1];
+    payload = JSON.stringify(note);
+  }
+  if (payload.length > 380000) { note = { v: 1, type: 'still', cover: note.cover }; payload = JSON.stringify(note); }
+  savedNote = payload;
+  try { localStorage.setItem('bm-note-' + (currentRoom || 'solo'), payload); } catch (e) {}
+  if (sendNote && connected) sendNote(payload);   // instant, if they're online now
+  cloudSaveNote(currentRoom || 'solo', payload).then(ok => {
+    const kind = note.type === 'live' ? 'live moment' : 'moment';
+    setStatus(ok ? 'left a ' + kind + ' for them · anytime 💙'
                  : (connected ? 'sent to your partner 💙' : 'left on the glass 💙'), 4000);
   });
 }
