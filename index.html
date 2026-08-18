@@ -15,6 +15,7 @@
   #maskCanvas   { z-index: 0; display: none; }
   #blurCanvas   { z-index: 2; }
   #frameCanvas  { z-index: 3; pointer-events: none; }
+  #fxCanvas     { z-index: 4; pointer-events: none; }
 
   #cursor {
     position: fixed; width: 20px; height: 20px; border-radius: 50%;
@@ -84,6 +85,80 @@
   @keyframes thumbIn { from { opacity:0; transform:scale(0.8) translateY(10px); } to { opacity:1; transform:scale(1); } }
 
   #flash { position: fixed; inset: 0; z-index: 200; background: white; opacity: 0; pointer-events: none; }
+
+  /* ── Long-distance: photos shared from partner ── */
+  .photo-thumb.partner { border-color: rgba(150,190,225,0.85); }
+  .photo-thumb .heart {
+    position: absolute; top: 2px; left: 3px; font-size: 11px;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.6)); pointer-events: none;
+  }
+
+  /* ── Long-distance: connection lobby ── */
+  #lobby {
+    position: fixed; inset: 0; z-index: 300; cursor: auto;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.72); backdrop-filter: blur(10px);
+    transition: opacity 0.3s; font-family: 'Pretendard', sans-serif;
+  }
+  .lobby-card {
+    width: min(90vw, 360px); padding: 28px 26px; border-radius: 16px;
+    background: rgba(20,24,28,0.92); border: 1px solid rgba(255,255,255,0.12);
+    color: #fff; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+  .lobby-card h1 { font-size: 20px; font-weight: 700; letter-spacing: 0.02em; }
+  .lobby-card h1 span { color: rgba(180,205,225,0.9); font-weight: 500; }
+  .lobby-card .sub { margin-top: 6px; font-size: 12px; color: rgba(255,255,255,0.5); line-height: 1.5; }
+  .lobby-card label {
+    display: block; font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase;
+    color: rgba(255,255,255,0.45); margin-bottom: 6px;
+  }
+  .lobby-card .mycode { margin-top: 22px; }
+  .lobby-card .code {
+    font-size: 22px; font-weight: 700; letter-spacing: 0.06em; color: #cfe0ec;
+    background: rgba(255,255,255,0.06); border: 1px dashed rgba(255,255,255,0.2);
+    border-radius: 8px; padding: 10px; user-select: all;
+  }
+  .lobby-card button {
+    margin-top: 10px; background: rgba(210,225,235,0.14); border: 1px solid rgba(255,255,255,0.25);
+    color: #fff; padding: 9px 16px; border-radius: 8px; font-size: 12px; cursor: pointer;
+    font-family: inherit; font-weight: 700; letter-spacing: 0.04em; transition: all 0.15s;
+  }
+  .lobby-card button:hover { background: rgba(210,225,235,0.28); }
+  .lobby-card .or { margin: 18px 0 12px; font-size: 11px; color: rgba(255,255,255,0.35); letter-spacing: 0.1em; }
+  .lobby-card .join { display: flex; gap: 8px; }
+  .lobby-card .join input {
+    flex: 1; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.2);
+    color: #fff; padding: 10px; border-radius: 8px; font-size: 14px; font-family: inherit; outline: none;
+  }
+  .lobby-card .join input::placeholder { color: rgba(255,255,255,0.35); }
+  .lobby-card .join button { margin-top: 0; }
+  .lobby-card .solo {
+    display: block; width: 100%; margin-top: 18px;
+    background: transparent; border: none; color: rgba(255,255,255,0.4); font-weight: 500;
+  }
+  .lobby-card .solo:hover { color: rgba(255,255,255,0.7); background: transparent; }
+  .lobby-card .hint {
+    margin-top: 12px; font-size: 11px; color: rgba(255,255,255,0.45); line-height: 1.6;
+  }
+  .lobby-card .hint b { color: rgba(180,205,225,0.9); font-weight: 700; }
+  .lobby-card .netstatus {
+    margin-top: 14px; font-size: 11px; color: rgba(180,205,225,0.85);
+    min-height: 14px; letter-spacing: 0.03em; line-height: 1.4;
+  }
+
+  #connBadge {
+    position: fixed; top: 20px; left: 20px; z-index: 56; display: none;
+    background: rgba(0,0,0,0.5); border: 1px solid rgba(210,225,235,0.4);
+    color: rgba(255,255,255,0.9); padding: 7px 12px; border-radius: 20px;
+    font-size: 11px; font-family: 'Pretendard', sans-serif; font-weight: 700;
+    letter-spacing: 0.08em; backdrop-filter: blur(6px);
+  }
+  @keyframes badgePulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(210,225,235,0); }
+    50%      { box-shadow: 0 0 16px 2px rgba(210,225,235,0.4); }
+  }
+  #connBadge.together { border-color: rgba(210,225,235,0.65); animation: badgePulse 2.6s ease-in-out infinite; }
+  #connBadge.away { border-color: rgba(255,180,185,0.45); color: rgba(255,222,224,0.9); animation: none; }
 </style>
 </head>
 <body>
@@ -93,31 +168,60 @@
   <canvas id="maskCanvas"></canvas>
   <canvas id="blurCanvas"></canvas>
   <canvas id="frameCanvas"></canvas>
+  <canvas id="fxCanvas"></canvas>
 </div>
 <div id="cursor"></div>
 <div id="status">initializing…</div>
 <div id="breathRing"></div>
 <div id="countdown"></div>
 <div id="btnGroup">
+  <button id="leaveBtn">💌 남기기</button>
   <button id="undoBtn">↩ undo</button>
   <button id="clearBtn">✕ clear</button>
 </div>
 <div id="photoStrip"></div>
 <div id="flash"></div>
 
+<div id="connBadge">💙 연결됨</div>
+<div id="lobby">
+  <div class="lobby-card">
+    <h1>Breath Mirror <span>· 함께</span></h1>
+    <p class="sub">둘이 같은 유리창에 입김 불고,<br>손으로 닦아요</p>
+    <div class="mycode">
+      <label>방 이름</label>
+      <div class="join">
+        <input id="roomInput" placeholder="방 이름" autocomplete="off" autocapitalize="off" spellcheck="false" />
+        <button id="enterBtn">들어가기</button>
+      </div>
+      <p class="hint">둘이 <b>같은 방 이름</b>을 입력하면 연결돼요.<br>이 이름을 남친에게 보내주세요.</p>
+    </div>
+    <button id="soloBtn" class="solo">혼자 쓰기</button>
+    <div class="netstatus" id="netStatus"></div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
+<!-- Trystero: serverless P2P rooms (no backend). If the default 'nostr' relays
+     are ever flaky, swap the import path below to /mqtt or /torrent — one line. -->
+<script type="module">
+  import { joinRoom } from 'https://esm.sh/trystero@0.21.5/nostr';
+  window.__joinRoom = joinRoom;
+  if (window.__onTrysteroReady) window.__onTrysteroReady();
+</script>
 <script>
 const video        = document.getElementById('video');
 const cameraCanvas = document.getElementById('cameraCanvas');
 const maskCanvas   = document.getElementById('maskCanvas');
 const blurCanvas   = document.getElementById('blurCanvas');
 const frameCanvas  = document.getElementById('frameCanvas');
+const fxCanvas     = document.getElementById('fxCanvas');
 const camCtx       = cameraCanvas.getContext('2d');
 const maskCtx      = maskCanvas.getContext('2d');
 const blurCtx      = blurCanvas.getContext('2d');
 const frameCtx     = frameCanvas.getContext('2d');
+const fxCtx        = fxCanvas.getContext('2d');
 const cursor       = document.getElementById('cursor');
 const statusEl     = document.getElementById('status');
 const breathRing   = document.getElementById('breathRing');
@@ -144,7 +248,7 @@ function setStatus(text, holdMs = 0) {
 // ── Resize ────────────────────────────────────────────────────────────
 function resize() {
   W = window.innerWidth; H = window.innerHeight;
-  [cameraCanvas, maskCanvas, blurCanvas, frameCanvas].forEach(c => { c.width = W; c.height = H; });
+  [cameraCanvas, maskCanvas, blurCanvas, frameCanvas, fxCanvas].forEach(c => { c.width = W; c.height = H; });
   offscreen.width = W; offscreen.height = H;
 }
 window.addEventListener('resize', resize);
@@ -168,6 +272,55 @@ function render() {
   blurCtx.globalCompositeOperation = 'source-over';
 }
 
+// ── Partner feedback FX (their breath bloom + wipe cursor) ────────────
+// Drawn on its own overlay in an independent loop so the "someone's here"
+// cues stay alive even before the camera frame is ready.
+let partnerBlooms = [];    // { x, y, born }
+let partnerCursor = null;  // { x, y, ts }
+
+function addPartnerBloom(nx, ny) {
+  partnerBlooms.push({ x: nx * W, y: ny * H, born: Date.now() });
+  if (partnerBlooms.length > 16) partnerBlooms.shift();
+}
+
+function renderFx() {
+  requestAnimationFrame(renderFx);
+  if (!W || !H) return;
+  fxCtx.clearRect(0, 0, W, H);
+  const now = Date.now();
+
+  // partner's breath — soft ripple that blooms then fades
+  const LIFE = 1500;
+  partnerBlooms = partnerBlooms.filter(b => now - b.born < LIFE);
+  for (const b of partnerBlooms) {
+    const t = (now - b.born) / LIFE;      // 0 → 1
+    const r = 30 + t * 170;
+    const a = (1 - t) * 0.5;
+    const g = fxCtx.createRadialGradient(b.x, b.y, 0, b.x, b.y, r);
+    g.addColorStop(0,    'rgba(210,225,235,0)');
+    g.addColorStop(0.72, `rgba(210,225,235,${a * 0.5})`);
+    g.addColorStop(0.87, `rgba(232,242,250,${a})`);
+    g.addColorStop(1,    'rgba(210,225,235,0)');
+    fxCtx.beginPath(); fxCtx.arc(b.x, b.y, r, 0, Math.PI * 2); fxCtx.fillStyle = g; fxCtx.fill();
+  }
+
+  // partner's wiping hand — a faint warm glow that trails their finger
+  if (partnerCursor) {
+    const age = now - partnerCursor.ts;
+    if (age < 550) {
+      const a = (1 - age / 550) * 0.85;
+      const { x, y } = partnerCursor;
+      const g = fxCtx.createRadialGradient(x, y, 0, x, y, 18);
+      g.addColorStop(0, `rgba(255,188,203,${a})`);
+      g.addColorStop(1, 'rgba(255,188,203,0)');
+      fxCtx.beginPath(); fxCtx.arc(x, y, 18, 0, Math.PI * 2); fxCtx.fillStyle = g; fxCtx.fill();
+    } else {
+      partnerCursor = null;
+    }
+  }
+}
+renderFx();
+
 // ── Fog ───────────────────────────────────────────────────────────────
 const FOG_COOLDOWN_MS = 1000; // keep a wiped/breathed-on area stable for ~1s before new fog can land on it
 const FOG_LIFETIME_MS = 60000; // fog fades itself out ~1 min after the last breath
@@ -179,18 +332,25 @@ function scheduleFogFade() {
   fogFadeTimer = setTimeout(() => { resetFog(); setStatus('blow on the screen'); }, FOG_LIFETIME_MS);
 }
 
-function addFog(intensity) {
-  const now = Date.now();
-  if (now < nextFogAllowedAt) return;
-  nextFogAllowedAt = now + FOG_COOLDOWN_MS;
-  fogReady = true;
-  scheduleFogFade();
-  for (let i = 0; i < 3 + Math.floor(Math.random()*3); i++) {
+// Fog blobs are generated in normalized (0..1) coords so a breath looks the
+// same on both partners' screens regardless of their window size.
+function generateFogBlobs(intensity) {
+  const blobs = [];
+  const n = 3 + Math.floor(Math.random()*3);
+  for (let i = 0; i < n; i++) {
     const cx = W*0.5 + (Math.random()-0.5)*W*0.6;
     const cy = H*0.5 + (Math.random()-0.5)*H*0.3;
     const r  = 100 + Math.random()*200 + intensity*600;
     const a  = Math.min(1, 0.4 + intensity*4);
-    const g  = maskCtx.createRadialGradient(cx,cy,0,cx,cy,r);
+    blobs.push({ nx: cx/W, ny: cy/H, nr: r/W, a });
+  }
+  return blobs;
+}
+
+function paintFogBlobs(blobs) {
+  for (const b of blobs) {
+    const cx = b.nx*W, cy = b.ny*H, r = b.nr*W, a = b.a;
+    const g = maskCtx.createRadialGradient(cx,cy,0,cx,cy,r);
     g.addColorStop(0, `rgba(255,255,255,${a})`);
     g.addColorStop(0.5, `rgba(255,255,255,${a*0.65})`);
     g.addColorStop(1, `rgba(255,255,255,0)`);
@@ -200,7 +360,23 @@ function addFog(intensity) {
     maskCtx.beginPath(); maskCtx.arc(cx,cy,r,0,Math.PI*2); maskCtx.fill();
     maskCtx.restore();
   }
+}
+
+// Land a set of fog blobs on the shared glass (local breath OR partner's breath).
+function landFog(blobs) {
+  fogReady = true;
+  scheduleFogFade();
+  paintFogBlobs(blobs);
   if (!countingDown) setStatus('pinch to draw');
+}
+
+function addFog(intensity) {
+  const now = Date.now();
+  if (now < nextFogAllowedAt) return;
+  nextFogAllowedAt = now + FOG_COOLDOWN_MS;
+  const blobs = generateFogBlobs(intensity);
+  landFog(blobs);
+  netSend({ t: 'fog', b: blobs });
 }
 
 // ── Draw ──────────────────────────────────────────────────────────────
@@ -208,6 +384,28 @@ let smoothX = null, smoothY = null;
 const SMOOTH = 0.4;
 let trail = [], lastDrawX = null, lastDrawY = null;
 
+// Wipe a smoothed trail into the fog. Shared by the local hand and the partner's.
+function strokeTrailOn(ctx, tr) {
+  if (tr.length < 2) return;
+  ctx.save();
+  ctx.globalCompositeOperation = 'destination-out';
+  ctx.strokeStyle = 'rgba(0,0,0,1)';
+  ctx.lineWidth = 40; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.beginPath();
+  if (tr.length === 2) {
+    ctx.moveTo(tr[0].x, tr[0].y);
+    ctx.lineTo(tr[1].x, tr[1].y);
+  } else {
+    ctx.moveTo((tr[0].x+tr[1].x)/2, (tr[0].y+tr[1].y)/2);
+    for (let i = 1; i < tr.length-1; i++) {
+      ctx.quadraticCurveTo(tr[i].x, tr[i].y,
+        (tr[i].x+tr[i+1].x)/2, (tr[i].y+tr[i+1].y)/2);
+    }
+  }
+  ctx.stroke(); ctx.restore();
+}
+
+let localWiping = false;
 function eraseAt(rawX, rawY) {
   if (smoothX === null) { smoothX = rawX; smoothY = rawY; }
   smoothX += SMOOTH * (rawX - smoothX);
@@ -215,26 +413,22 @@ function eraseAt(rawX, rawY) {
   const x = smoothX, y = smoothY;
   lastDrawX = x; lastDrawY = y;
   trail.push({x, y}); if (trail.length > 6) trail.shift();
-  if (trail.length < 2) return;
-  maskCtx.save();
-  maskCtx.globalCompositeOperation = 'destination-out';
-  maskCtx.strokeStyle = 'rgba(0,0,0,1)';
-  maskCtx.lineWidth = 40; maskCtx.lineCap = 'round'; maskCtx.lineJoin = 'round';
-  maskCtx.beginPath();
-  if (trail.length === 2) {
-    maskCtx.moveTo(trail[0].x, trail[0].y);
-    maskCtx.lineTo(trail[1].x, trail[1].y);
-  } else {
-    maskCtx.moveTo((trail[0].x+trail[1].x)/2, (trail[0].y+trail[1].y)/2);
-    for (let i = 1; i < trail.length-1; i++) {
-      maskCtx.quadraticCurveTo(trail[i].x, trail[i].y,
-        (trail[i].x+trail[i+1].x)/2, (trail[i].y+trail[i+1].y)/2);
-    }
-  }
-  maskCtx.stroke(); maskCtx.restore();
+  strokeTrailOn(maskCtx, trail);
+  localWiping = true;
+  netSend({ t: 'wipe', x: x/W, y: y/H });
 }
 
+// Partner's wipe replays into the same mask, on its own trail.
+let remoteTrail = [];
+function onRemoteWipe(nx, ny) {
+  remoteTrail.push({ x: nx*W, y: ny*H }); if (remoteTrail.length > 6) remoteTrail.shift();
+  strokeTrailOn(maskCtx, remoteTrail);
+  partnerCursor = { x: nx*W, y: ny*H, ts: Date.now() };
+}
+function onRemoteWipeEnd() { remoteTrail = []; }
+
 function resetDraw() {
+  if (localWiping) { localWiping = false; netSend({ t: 'wipeEnd' }); }
   smoothX = null; smoothY = null;
   trail = []; lastDrawX = null; lastDrawY = null;
 }
@@ -319,26 +513,48 @@ function doCapture() {
   sCtx.drawImage(cameraCanvas, 0, 0);
   sCtx.drawImage(blurCanvas, 0, 0);
   snap.toBlob(blob => {
-    const url = URL.createObjectURL(blob);
-    const wrap = document.createElement('div');
-    wrap.className = 'photo-thumb';
-    const img = document.createElement('img');
-    img.src = url;
-    const btn = document.createElement('div');
-    btn.className = 'save-btn';
-    btn.textContent = '↓ save';
-    btn.addEventListener('click', e => {
-      e.stopPropagation();
-      const a = document.createElement('a');
-      a.href = url; a.download = `breath-mirror-${Date.now()}.png`; a.click();
-    });
-    wrap.appendChild(img); wrap.appendChild(btn);
-    photoStrip.appendChild(wrap);
-    wrap.scrollIntoView({ behavior: 'smooth', inline: 'end' });
+    addPhotoThumb(URL.createObjectURL(blob), false);
+    sharePhoto(snap);
     frameCtx.clearRect(0, 0, W, H);
     holdStart = null;
     setStatus(fogReady ? 'pinch to draw' : 'blow on the screen');
   }, 'image/png');
+}
+
+// Add one photo to the strip. `fromPartner` marks it as the other person's shot.
+function addPhotoThumb(url, fromPartner) {
+  const wrap = document.createElement('div');
+  wrap.className = 'photo-thumb' + (fromPartner ? ' partner' : '');
+  const img = document.createElement('img');
+  img.src = url;
+  const btn = document.createElement('div');
+  btn.className = 'save-btn';
+  btn.textContent = '↓ save';
+  btn.addEventListener('click', e => {
+    e.stopPropagation();
+    const a = document.createElement('a');
+    a.href = url; a.download = `breath-mirror-${Date.now()}.png`; a.click();
+  });
+  wrap.appendChild(img); wrap.appendChild(btn);
+  if (fromPartner) {
+    const h = document.createElement('div');
+    h.className = 'heart'; h.textContent = '💙';
+    wrap.appendChild(h);
+  }
+  photoStrip.appendChild(wrap);
+  wrap.scrollIntoView({ behavior: 'smooth', inline: 'end' });
+}
+
+// Send a small (downscaled) copy of a captured photo to the partner.
+function sharePhoto(sourceCanvas) {
+  if (!sendPic || !connected) return;
+  const sw = 640, sh = Math.max(1, Math.round(sw * H / W));
+  const c = document.createElement('canvas'); c.width = sw; c.height = sh;
+  c.getContext('2d').drawImage(sourceCanvas, 0, 0, sw, sh);
+  c.toBlob(b => {
+    if (!b) return;
+    b.arrayBuffer().then(buf => sendPic(new Uint8Array(buf)));
+  }, 'image/jpeg', 0.7);
 }
 
 // ── Hands ─────────────────────────────────────────────────────────────
@@ -436,12 +652,181 @@ async function startCamera() {
 }
 
 // ── Buttons ───────────────────────────────────────────────────────────
+document.getElementById('leaveBtn').addEventListener('click', leaveNote);
 document.getElementById('undoBtn').addEventListener('click', undo);
 document.getElementById('clearBtn').addEventListener('click', () => {
   resetFog();
   undoStack = [];
   setStatus('blow on the screen');
+  netSend({ t: 'clear' });
 });
+
+// ── Long-distance networking (Trystero: serverless P2P rooms) ─────────
+// Each person keeps their own camera; only breath / wipe / clear / photo
+// events cross the wire, so it feels like one pane of glass between you.
+// Both partners join the SAME room name — no host, no signaling server.
+let room = null, sendSig = null, sendPic = null, sendNote = null;
+let connected = false, pendingCode = null, currentRoom = null, savedNote = null;
+const lobbyEl    = document.getElementById('lobby');
+const roomInput  = document.getElementById('roomInput');
+const netStatus  = document.getElementById('netStatus');
+const connBadge  = document.getElementById('connBadge');
+
+function netSend(obj) { if (sendSig) { try { sendSig(obj); } catch (e) {} } }
+function setNetStatus(t) { if (netStatus) netStatus.textContent = t; }
+
+function onPeerConnected() {
+  connected = true;
+  connBadge.textContent = '💙 함께 있는 중';
+  connBadge.classList.add('together');
+  connBadge.classList.remove('away');
+  connBadge.style.display = 'block';
+  lobbyEl.style.opacity = '0';
+  setTimeout(() => { lobbyEl.style.display = 'none'; }, 300);
+  // deliver whatever I last left on the glass for this room
+  if (sendNote && savedNote) sendNote(savedNote);
+}
+
+// Called once Trystero's module has loaded, in case the user clicked first.
+window.__onTrysteroReady = () => {
+  if (pendingCode) { const c = pendingCode; pendingCode = null; joinBreathRoom(c); }
+};
+
+function joinBreathRoom(code) {
+  if (!window.__joinRoom) { pendingCode = code; setNetStatus('연결 준비 중… 곧 시작돼요'); return; }
+  if (room) { try { room.leave(); } catch (e) {} }
+  currentRoom = code;
+  savedNote = loadSavedNote(code);   // a note I left here before, to hand over on connect
+  cloudFetchNote(code).then(showCloudNote);   // a note waiting for me from before
+  setNetStatus('상대를 기다리는 중…');
+  room = window.__joinRoom({ appId: 'breath-mirror-longdistance' }, code);
+  const sig  = room.makeAction('sig');  sendSig  = sig[0];  sig[1](data => handleData(data));
+  const pic  = room.makeAction('pic');  sendPic  = pic[0];  pic[1](data => onRemotePhoto(data));
+  const note = room.makeAction('note'); sendNote = note[0]; note[1](data => onRemoteNote(data));
+  room.onPeerJoin(() => onPeerConnected());
+  room.onPeerLeave(() => {
+    connected = false;
+    connBadge.textContent = '· 잠시 떨어졌어요';
+    connBadge.classList.remove('together');
+    connBadge.classList.add('away');
+  });
+}
+
+function handleData(msg) {
+  switch (msg && msg.t) {
+    case 'fog':
+      landFog(msg.b);
+      breathRing.classList.add('active');
+      clearTimeout(mouthOpenTO);
+      mouthOpenTO = setTimeout(() => breathRing.classList.remove('active'), 300);
+      // bloom a soft ripple at the centre of where they breathed
+      if (msg.b && msg.b.length) {
+        let sx = 0, sy = 0;
+        for (const b of msg.b) { sx += b.nx; sy += b.ny; }
+        addPartnerBloom(sx / msg.b.length, sy / msg.b.length);
+      }
+      break;
+    case 'wipe':    onRemoteWipe(msg.x, msg.y); break;
+    case 'wipeEnd': onRemoteWipeEnd(); break;
+    case 'clear':   resetFog(); setStatus('blow on the screen'); break;
+  }
+}
+
+function onRemotePhoto(data) {
+  const bytes = data instanceof Uint8Array ? data : new Uint8Array(data);
+  addPhotoThumb(URL.createObjectURL(new Blob([bytes], { type: 'image/jpeg' })), true);
+}
+
+// ── Notes left on the glass (handwriting / hearts) ───────────────────
+// A "note" is the fog+writing mask itself, so the partner sees exactly the
+// shape you left. Kept as a PNG data URL and delivered three ways:
+//   • live over P2P (if you're both online right now)
+//   • saved on this device (localStorage, per room)
+//   • saved to a tiny cloud store so they see it even if you're offline
+// ↓↓↓ PASTE YOUR FIREBASE REALTIME DATABASE URL BETWEEN THE QUOTES ↓↓↓
+const FIREBASE_DB_URL = 'https://breath-mirror-62e17-default-rtdb.asia-southeast1.firebasedatabase.app';
+// ↑↑↑ leave '' and notes still work over P2P + this device (just not offline) ↑↑↑
+
+function myDeviceId() {
+  let id = null;
+  try {
+    id = localStorage.getItem('bm-myid');
+    if (!id) { id = 'u-' + Math.random().toString(36).slice(2, 10); localStorage.setItem('bm-myid', id); }
+  } catch (e) {}
+  return id || 'anon';
+}
+
+function makeNoteDataURL() {
+  const sw = Math.min(W, 900), sh = Math.max(1, Math.round(sw * H / W));
+  const c = document.createElement('canvas'); c.width = sw; c.height = sh;
+  c.getContext('2d').drawImage(maskCanvas, 0, 0, sw, sh);
+  return c.toDataURL('image/png');
+}
+function renderNoteDataURL(dataURL, label) {
+  const img = new Image();
+  img.onload = () => {
+    maskCtx.drawImage(img, 0, 0, W, H);
+    fogReady = true; scheduleFogFade();
+    if (label) setStatus(label, 4000);
+  };
+  img.src = dataURL;
+}
+function loadSavedNote(room) {
+  try { return localStorage.getItem('bm-note-' + room) || null; } catch (e) { return null; }
+}
+
+// P2P: partner handed me their glass live
+function onRemoteNote(dataURL) { renderNoteDataURL(dataURL, '💌 남친이 남긴 유리예요'); }
+
+// Cloud: read/write the room's latest note (works even with no one online)
+function cloudSaveNote(room, dataURL) {
+  if (!FIREBASE_DB_URL) return Promise.resolve(false);
+  const payload = JSON.stringify({ data: dataURL, ts: Date.now(), from: myDeviceId() });
+  return fetch(FIREBASE_DB_URL + '/notes/' + encodeURIComponent(room) + '.json', { method: 'PUT', body: payload })
+    .then(r => r.ok).catch(() => false);
+}
+function cloudFetchNote(room) {
+  if (!FIREBASE_DB_URL) return Promise.resolve(null);
+  return fetch(FIREBASE_DB_URL + '/notes/' + encodeURIComponent(room) + '.json')
+    .then(r => r.ok ? r.json() : null).catch(() => null);
+}
+function showCloudNote(note) {
+  if (!note || !note.data || note.from === myDeviceId()) return;   // nothing, or my own
+  const seenKey = 'bm-noteseen-' + (currentRoom || '');
+  let lastSeen = 0; try { lastSeen = +(localStorage.getItem(seenKey) || 0); } catch (e) {}
+  if (note.ts && note.ts <= lastSeen) return;                      // already shown before
+  renderNoteDataURL(note.data, '💌 남친이 남긴 유리예요');
+  try { localStorage.setItem(seenKey, String(note.ts || Date.now())); } catch (e) {}
+}
+
+function leaveNote() {
+  if (!fogReady) { setStatus('유리에 먼저 써주세요', 2000); return; }
+  const url = makeNoteDataURL();
+  savedNote = url;
+  try { localStorage.setItem('bm-note-' + (currentRoom || 'solo'), url); } catch (e) {}
+  if (sendNote && connected) sendNote(url);       // instant, if they're online now
+  cloudSaveNote(currentRoom || 'solo', url).then(ok => {
+    setStatus(ok ? '유리에 남겼어요 · 남친이 언제 켜도 보여요 💙'
+                 : (connected ? '남친에게 남겼어요 💙' : '유리에 남겨뒀어요 💙'), 4000);
+  });
+}
+
+// Lobby controls
+const enterBtn = document.getElementById('enterBtn');
+enterBtn.addEventListener('click', () => {
+  const code = (roomInput.value || '').trim();
+  if (!code) { setNetStatus('방 이름을 입력해 주세요'); return; }
+  joinBreathRoom(code);
+});
+roomInput.addEventListener('keydown', e => { if (e.key === 'Enter') enterBtn.click(); });
+document.getElementById('soloBtn').addEventListener('click', () => {
+  lobbyEl.style.opacity = '0';
+  setTimeout(() => { lobbyEl.style.display = 'none'; }, 300);
+});
+
+// Suggest a room name so one person can just share it.
+roomInput.value = 'bm-' + Math.random().toString(36).slice(2, 7);
+setNetStatus('둘이 같은 방 이름을 입력하고 들어가기를 누르세요');
 
 startCamera();
 </script>
