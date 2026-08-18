@@ -5,9 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Fogether</title>
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/npm/pretendard@latest/dist/web/static/pretendard.css" />
+<!-- Display fonts for the landing title (compare with the font toggle) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@200;300;500&display=swap" rel="stylesheet">
+<link href="https://api.fontshare.com/v2/css?f[]=clash-display@200,300,400,500&display=swap" rel="stylesheet">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: #000; overflow: hidden; width: 100vw; height: 100vh; height: 100dvh; cursor: none; }
+  body { background: #000; overflow: hidden; width: 100vw; height: 100vh; height: 100dvh; cursor: default; }
   #container { position: relative; width: 100vw; height: 100vh; height: 100dvh; }
   video { position: absolute; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); opacity: 0; pointer-events: none; }
   canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
@@ -91,6 +96,7 @@
     position: fixed; inset: 0; z-index: 210; display: flex; align-items: center; justify-content: center;
     background: rgba(0,0,0,0.55); backdrop-filter: blur(4px);
     opacity: 0; transition: opacity 0.35s; pointer-events: none;
+    overflow-y: auto; padding: 20px 16px;
   }
   #noteCard.show { opacity: 1; pointer-events: auto; }
   #noteCard .note-inner {
@@ -104,7 +110,7 @@
     letter-spacing: 0.06em; color: #b0607a; text-align: center; padding: 4px 0 10px;
   }
   #noteCard.live .note-tag::after { content: ' · ● LIVE'; color: #d0356a; font-size: 10px; letter-spacing: 0.1em; }
-  #noteCard img { display: block; width: 100%; border-radius: 3px; }
+  #noteCard img { display: block; width: 100%; max-height: 64vh; object-fit: contain; border-radius: 3px; }
   #noteCard .note-actions { display: flex; gap: 8px; justify-content: center; margin-top: 12px; }
   #noteCard .note-actions button {
     font-family: 'Pretendard', sans-serif; font-weight: 700; font-size: 11px; letter-spacing: 0.08em;
@@ -121,57 +127,92 @@
   }
 
   /* ── Long-distance: connection lobby ── */
+  /* ── Interactive glass landing (move cursor / finger to wipe the fog) ── */
   #lobby {
-    position: fixed; inset: 0; z-index: 300; cursor: auto;
-    display: flex; align-items: center; justify-content: center;
-    background: rgba(0,0,0,0.72); backdrop-filter: blur(10px);
-    transition: opacity 0.3s; font-family: 'Pretendard', sans-serif;
+    position: fixed; inset: 0; z-index: 300; overflow: hidden; cursor: crosshair;
+    --mx: 50%; --my: 38%;
+    transition: opacity 0.4s; font-family: 'Pretendard', sans-serif; background: #0e1220;
   }
-  .lobby-card {
-    width: min(90vw, 360px); padding: 28px 26px; border-radius: 16px;
-    background: rgba(20,24,28,0.92); border: 1px solid rgba(255,255,255,0.12);
-    color: #fff; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  .glass-sharp, .glass-frost {
+    position: absolute; inset: 0; background-size: cover; background-position: center;
+    /* ↓↓ drop your landing image next to index.html as landing.jpg (or change this URL) ↓↓ */
+    background-image:
+      url('landing.jpg'),
+      radial-gradient(38% 46% at 24% 30%, #ffd9a8, transparent 70%),
+      radial-gradient(40% 44% at 74% 26%, #ff9e86, transparent 72%),
+      radial-gradient(50% 50% at 60% 82%, #9fc27a, transparent 72%),
+      radial-gradient(42% 40% at 30% 78%, #ffb3c8, transparent 70%),
+      linear-gradient(160deg, #bfe0f5, #ffe6d8 55%, #f6ecd8);
   }
-  .lobby-card h1 { font-size: 20px; font-weight: 700; letter-spacing: 0.02em; }
-  .lobby-card h1 span { color: rgba(180,205,225,0.9); font-weight: 500; }
-  .lobby-card .sub { margin-top: 6px; font-size: 12px; color: rgba(255,255,255,0.5); line-height: 1.5; }
-  .lobby-card label {
-    display: block; font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase;
-    color: rgba(255,255,255,0.45); margin-bottom: 6px;
+  .glass-frost {
+    filter: blur(16px) brightness(1.06);
+    -webkit-mask: radial-gradient(circle at var(--mx) var(--my), transparent 0, transparent 62px, #000 155px);
+            mask: radial-gradient(circle at var(--mx) var(--my), transparent 0, transparent 62px, #000 155px);
   }
-  .lobby-card .mycode { margin-top: 22px; }
-  .lobby-card .code {
-    font-size: 22px; font-weight: 700; letter-spacing: 0.06em; color: #cfe0ec;
-    background: rgba(255,255,255,0.06); border: 1px dashed rgba(255,255,255,0.2);
-    border-radius: 8px; padding: 10px; user-select: all;
+  .glass-frost::after {
+    content: ''; position: absolute; inset: 0;
+    background:
+      repeating-linear-gradient(90deg, rgba(255,255,255,0.12) 0 2px, rgba(255,255,255,0) 2px 11px),
+      linear-gradient(rgba(250,248,244,0.32), rgba(250,248,244,0.32));
   }
-  .lobby-card button {
-    margin-top: 10px; background: rgba(210,225,235,0.14); border: 1px solid rgba(255,255,255,0.25);
-    color: #fff; padding: 9px 16px; border-radius: 8px; font-size: 12px; cursor: pointer;
-    font-family: inherit; font-weight: 700; letter-spacing: 0.04em; transition: all 0.15s;
+  .glass-grain {
+    position: absolute; inset: 0; mix-blend-mode: soft-light; opacity: 0.5; pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
-  .lobby-card button:hover { background: rgba(210,225,235,0.28); }
-  .lobby-card .or { margin: 18px 0 12px; font-size: 11px; color: rgba(255,255,255,0.35); letter-spacing: 0.1em; }
-  .lobby-card .join { display: flex; gap: 8px; }
-  .lobby-card .join input {
-    flex: 1; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.2);
-    color: #fff; padding: 10px; border-radius: 8px; font-size: 14px; font-family: inherit; outline: none;
+  .lobby-ui {
+    position: absolute; inset: 0; z-index: 3; padding: min(7vw, 54px);
+    display: flex; flex-direction: column; justify-content: space-between; pointer-events: none;
   }
-  .lobby-card .join input::placeholder { color: rgba(255,255,255,0.35); }
-  .lobby-card .join button { margin-top: 0; }
-  .lobby-card .solo {
-    display: block; width: 100%; margin-top: 18px;
-    background: transparent; border: none; color: rgba(255,255,255,0.4); font-weight: 500;
+  .lobby-ui h1 {
+    font-family: var(--display-font, 'Unbounded'), system-ui, sans-serif;
+    font-weight: 200; font-size: clamp(34px, 9vw, 84px); letter-spacing: 0.05em;
+    color: #fff; line-height: 0.96; text-shadow: 0 2px 24px rgba(120,90,70,0.4);
   }
-  .lobby-card .solo:hover { color: rgba(255,255,255,0.7); background: transparent; }
-  .lobby-card .hint {
-    margin-top: 12px; font-size: 11px; color: rgba(255,255,255,0.45); line-height: 1.6;
+  .lobby-ui h1 span {
+    display: block; font-weight: 300; font-size: 0.4em; letter-spacing: 0.34em;
+    color: rgba(255,255,255,0.92); margin-top: 0.18em;
   }
-  .lobby-card .hint b { color: rgba(180,205,225,0.9); font-weight: 700; }
-  .lobby-card .netstatus {
-    margin-top: 14px; font-size: 11px; color: rgba(180,205,225,0.85);
-    min-height: 14px; letter-spacing: 0.03em; line-height: 1.4;
+  .lobby-ui .sub {
+    margin-top: 14px; font-size: 13px; color: rgba(255,255,255,0.9); line-height: 1.5; max-width: 340px;
   }
+  .lobby-foot { pointer-events: auto; max-width: 340px; }
+  .lobby-foot label {
+    display: block; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: rgba(255,255,255,0.8); margin-bottom: 7px;
+  }
+  .lobby-foot .join { display: flex; gap: 8px; }
+  .lobby-foot .join input {
+    flex: 1; background: rgba(255,255,255,0.22); border: 1.5px solid rgba(255,255,255,0.6);
+    color: #fff; padding: 11px 13px; border-radius: 12px; font-size: 14px;
+    font-family: 'Pretendard', sans-serif; outline: none; backdrop-filter: blur(6px);
+  }
+  .lobby-foot .join input::placeholder { color: rgba(255,255,255,0.75); }
+  .lobby-foot .join button {
+    background: rgba(255,255,255,0.92); border: none; color: #b5643f; padding: 11px 18px;
+    border-radius: 12px; font-size: 13px; font-weight: 700; cursor: pointer;
+    font-family: 'Pretendard', sans-serif; letter-spacing: 0.02em; transition: all 0.15s;
+  }
+  .lobby-foot .join button:hover { background: #fff; }
+  .lobby-foot .hint { margin-top: 11px; font-size: 11px; color: rgba(255,255,255,0.78); line-height: 1.6; }
+  .lobby-foot .hint b { color: #fff; font-weight: 700; }
+  .lobby-meta { display: flex; align-items: center; justify-content: space-between; margin-top: 16px; }
+  .lobby-foot .solo {
+    background: transparent; border: none; color: rgba(255,255,255,0.7); font-weight: 600;
+    font-size: 12px; cursor: pointer; font-family: 'Pretendard', sans-serif; padding: 0;
+  }
+  .lobby-foot .solo:hover { color: #fff; }
+  .wipehint { display: block; margin-top: 14px; font-size: 10px; font-style: italic; color: rgba(255,255,255,0.6); }
+  .lobby-foot .netstatus {
+    margin-top: 12px; font-size: 11px; color: rgba(255,255,255,0.9);
+    min-height: 14px; letter-spacing: 0.03em; line-height: 1.4; text-shadow: 0 1px 6px rgba(0,0,0,0.3);
+  }
+  #fontToggle {
+    position: absolute; top: 16px; right: 16px; z-index: 4; pointer-events: auto;
+    background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.5); color: #fff;
+    padding: 6px 11px; border-radius: 20px; font-size: 10px; font-weight: 700; cursor: pointer;
+    font-family: 'Pretendard', sans-serif; letter-spacing: 0.04em; backdrop-filter: blur(6px);
+  }
+  #fontToggle:hover { background: rgba(0,0,0,0.6); }
 
   #connBadge {
     position: fixed; top: 20px; left: 20px; z-index: 56; display: none;
@@ -186,6 +227,51 @@
   }
   #connBadge.together { border-color: rgba(210,225,235,0.65); animation: badgePulse 2.6s ease-in-out infinite; }
   #connBadge.away { border-color: rgba(255,180,185,0.45); color: rgba(255,222,224,0.9); animation: none; }
+  #connBadge.waiting { border-color: rgba(255,255,255,0.4); color: rgba(255,255,255,0.85); animation: none; cursor: pointer; }
+  #connBadge.waiting:hover { background: rgba(0,0,0,0.6); }
+
+  /* Note browse (last 5) + reopen chip */
+  #noteCard .note-nav { display: flex; align-items: center; justify-content: center; gap: 14px; padding: 2px 0 10px; }
+  #noteCard .note-nav button {
+    background: #f3f3f3; border: 1px solid rgba(0,0,0,0.12); color: #555;
+    width: 26px; height: 26px; border-radius: 50%; font-size: 15px; line-height: 1; cursor: pointer;
+    font-family: 'Pretendard', sans-serif; padding: 0;
+  }
+  #noteCard .note-nav button:hover { background: #e6e6e6; }
+  #noteCard .note-nav #noteCount { font-family: 'Pretendard', sans-serif; font-size: 11px; font-weight: 700; color: #b0607a; letter-spacing: 0.06em; }
+  #notesChip {
+    position: fixed; left: 20px; bottom: 96px; z-index: 56; display: none; cursor: pointer;
+    background: rgba(0,0,0,0.5); border: 1px solid rgba(210,225,235,0.4); color: #fff;
+    padding: 7px 12px; border-radius: 20px; font-size: 12px; font-weight: 700;
+    font-family: 'Pretendard', sans-serif; letter-spacing: 0.04em; backdrop-filter: blur(6px);
+  }
+  #notesChip:hover { background: rgba(0,0,0,0.65); }
+
+  /* ── First-run how-to (reopen with "? how") ── */
+  #howto {
+    position: fixed; inset: 0; z-index: 220; display: flex; align-items: center; justify-content: center;
+    padding: 24px; background: rgba(14,18,32,0.66); backdrop-filter: blur(8px);
+    opacity: 0; transition: opacity 0.3s; pointer-events: none;
+  }
+  #howto.show { opacity: 1; pointer-events: auto; }
+  .howto-card {
+    width: min(90vw, 360px); background: linear-gradient(165deg, #fff6ea, #ffe9ec);
+    border-radius: 18px; padding: 30px 26px 20px; text-align: center;
+    box-shadow: 0 24px 70px rgba(120,80,60,0.4);
+    transform: translateY(12px) scale(0.97); transition: transform 0.3s; font-family: 'Pretendard', sans-serif;
+  }
+  #howto.show .howto-card { transform: none; }
+  .howto-icon { font-size: 50px; line-height: 1; }
+  .howto-title { margin-top: 14px; font-weight: 800; font-size: 19px; color: #b5503a; }
+  .howto-text { margin-top: 10px; font-size: 13px; line-height: 1.6; color: #6b5b52; min-height: 84px; }
+  .howto-dots { display: flex; gap: 6px; justify-content: center; margin-top: 14px; }
+  .howto-dots span { width: 7px; height: 7px; border-radius: 50%; background: rgba(181,80,58,0.25); transition: all 0.2s; }
+  .howto-dots span.on { background: #c86a4c; width: 18px; border-radius: 4px; }
+  .howto-actions { display: flex; align-items: center; justify-content: space-between; margin-top: 18px; }
+  .ht-skip { background: none; border: none; color: #a58a7e; font-size: 12px; cursor: pointer; font-family: 'Pretendard', sans-serif; }
+  .ht-skip:hover { color: #7a5a41; }
+  .ht-next { background: #c86a4c; border: none; color: #fff; padding: 10px 20px; border-radius: 12px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: 'Pretendard', sans-serif; }
+  .ht-next:hover { background: #b5503a; }
 
   /* ── Mobile / small screens ── */
   @media (max-width: 600px) {
@@ -194,7 +280,8 @@
     #connBadge { top: 12px; left: 12px; font-size: 10px; padding: 6px 10px; }
     #status { bottom: 148px; font-size: 10px; letter-spacing: 0.12em; }
     #breathRing { bottom: 100px; width: 40px; height: 40px; }
-    .lobby-card { padding: 24px 20px; }
+    .lobby-ui { padding: 28px 22px; }
+    .lobby-ui h1 span { letter-spacing: 0.26em; }
     #photoStrip { height: 72px; gap: 6px; padding: 6px 10px; }
     .photo-thumb { height: 56px; }
     #noteCard .note-inner { padding: 10px 10px 12px; }
@@ -220,7 +307,8 @@
 <div id="breathRing"></div>
 <div id="countdown"></div>
 <div id="btnGroup">
-  <button id="leaveBtn">💌 for you</button>
+  <button id="helpBtn" title="how to play">? how</button>
+  <button id="leaveBtn">✎ leave mark</button>
   <button id="undoBtn">↩ undo</button>
   <button id="clearBtn">✕ clear</button>
 </div>
@@ -230,6 +318,11 @@
 <div id="noteCard" hidden>
   <div class="note-inner">
     <div class="note-tag">💌 left for you</div>
+    <div id="noteNav" class="note-nav" style="display:none">
+      <button id="notePrev" title="older">‹</button>
+      <span id="noteCount">1 / 1</span>
+      <button id="noteNext" title="newer">›</button>
+    </div>
     <img id="noteImg" alt="a note left for you" />
     <div class="note-actions">
       <button id="noteSave">↓ save</button>
@@ -237,22 +330,42 @@
     </div>
   </div>
 </div>
+<div id="notesChip" style="display:none">💌 0</div>
+
+<div id="howto" hidden>
+  <div class="howto-card">
+    <div class="howto-icon" id="htIcon">👄</div>
+    <div class="howto-title" id="htTitle"></div>
+    <div class="howto-text" id="htText"></div>
+    <div class="howto-dots" id="htDots"></div>
+    <div class="howto-actions">
+      <button id="htSkip" class="ht-skip">skip</button>
+      <button id="htNext" class="ht-next">next</button>
+    </div>
+  </div>
+</div>
 
 <div id="connBadge">💙 connected</div>
 <div id="lobby">
-  <div class="lobby-card">
-    <h1>Fogether<span> · for two</span></h1>
-    <p class="sub">Fog up the same glass and<br>wipe it clear, together</p>
-    <div class="mycode">
-      <label>Room name</label>
-      <div class="join">
-        <input id="roomInput" placeholder="Room name" autocomplete="off" autocapitalize="off" spellcheck="false" />
-        <button id="enterBtn">Enter</button>
-      </div>
-      <p class="hint">Enter the <b>same room name</b> on both sides to connect.<br>Send this name to your partner.</p>
+  <div class="glass-sharp"></div>
+  <div class="glass-frost"></div>
+  <div class="glass-grain"></div>
+  <button id="fontToggle">font · Unbounded ⇄</button>
+  <div class="lobby-ui">
+    <div class="lobby-head">
+      <h1>Fogether<span>for two</span></h1>
+      <p class="sub">breathe on the same glass — even far apart.</p>
     </div>
-    <button id="soloBtn" class="solo">Use solo</button>
-    <div class="netstatus" id="netStatus"></div>
+    <div class="lobby-foot">
+      <label for="roomInput">Room name</label>
+      <div class="join">
+        <input id="roomInput" placeholder="our little room" autocomplete="off" autocapitalize="off" spellcheck="false" />
+        <button id="enterBtn">enter</button>
+      </div>
+      <p class="hint">Start alone — then share the name or link. Your partner joins anytime.</p>
+      <div class="netstatus" id="netStatus"></div>
+      <span class="wipehint">✦ move your cursor to wipe the fog</span>
+    </div>
   </div>
 </div>
 
@@ -303,9 +416,18 @@ function setStatus(text, holdMs = 0) {
 
 // ── Resize ────────────────────────────────────────────────────────────
 function resize() {
+  // resizing a canvas clears it, so preserve the fog mask (the only persistent layer)
+  const oldW = W, oldH = H;
+  let savedMask = null;
+  if (oldW && oldH) {
+    savedMask = document.createElement('canvas');
+    savedMask.width = oldW; savedMask.height = oldH;
+    savedMask.getContext('2d').drawImage(maskCanvas, 0, 0);
+  }
   W = window.innerWidth; H = window.innerHeight;
   [cameraCanvas, maskCanvas, blurCanvas, frameCanvas, fxCanvas].forEach(c => { c.width = W; c.height = H; });
   offscreen.width = W; offscreen.height = H;
+  if (savedMask) maskCtx.drawImage(savedMask, 0, 0, oldW, oldH, 0, 0, W, H);  // keep the fog on resize
 }
 window.addEventListener('resize', resize);
 
@@ -753,6 +875,9 @@ document.getElementById('noteSave').addEventListener('click', () => {
   a.href = document.getElementById('noteCard').dataset.url || '';
   a.download = 'fogether-' + Date.now() + '.jpg'; a.click();
 });
+document.getElementById('notePrev').addEventListener('click', () => openCardAt(archiveIdx + 1)); // older
+document.getElementById('noteNext').addEventListener('click', () => openCardAt(archiveIdx - 1)); // newer
+document.getElementById('notesChip').addEventListener('click', () => openCardAt(0));
 document.getElementById('undoBtn').addEventListener('click', undo);
 document.getElementById('clearBtn').addEventListener('click', () => {
   resetFog();
@@ -775,16 +900,31 @@ const connBadge  = document.getElementById('connBadge');
 function netSend(obj) { if (sendSig) { try { sendSig(obj); } catch (e) {} } }
 function setNetStatus(t) { if (netStatus) netStatus.textContent = t; }
 
+function enterApp() {
+  lobbyEl.style.opacity = '0';
+  setTimeout(() => { lobbyEl.style.display = 'none'; }, 400);
+  try { if (!localStorage.getItem('bm-onboarded')) setTimeout(showHowto, 650); } catch (e) {}
+}
+function showWaitingBadge() {
+  connBadge.textContent = '◌ waiting · tap to invite';
+  connBadge.classList.add('waiting');
+  connBadge.classList.remove('together', 'away');
+  connBadge.style.display = 'block';
+}
 function onPeerConnected() {
   connected = true;
   connBadge.textContent = '💙 here together';
   connBadge.classList.add('together');
-  connBadge.classList.remove('away');
+  connBadge.classList.remove('away', 'waiting');
   connBadge.style.display = 'block';
-  lobbyEl.style.opacity = '0';
-  setTimeout(() => { lobbyEl.style.display = 'none'; }, 300);
   // deliver whatever I last left on the glass for this room
   if (sendNote && savedNote) sendNote(savedNote);
+}
+function onPeerGone() {
+  connected = false;
+  connBadge.textContent = '◌ waiting · tap to invite';
+  connBadge.classList.add('waiting');
+  connBadge.classList.remove('together', 'away');
 }
 
 // Called once Trystero's module has loaded, in case the user clicked first.
@@ -796,20 +936,18 @@ function joinBreathRoom(code) {
   if (!window.__joinRoom) { pendingCode = code; setNetStatus('getting ready… one moment'); return; }
   if (room) { try { room.leave(); } catch (e) {} }
   currentRoom = code;
-  savedNote = loadSavedNote(code);   // a note I left here before, to hand over on connect
+  savedNote = loadSavedNote(code);            // a note I left here before, to hand over on connect
+  noteArchive = loadArchive(code);            // the last few notes kept for this room
+  updateNotesChip();
+  enterApp();                                 // go straight in — no need to wait for a partner
+  showWaitingBadge();                         // "waiting · tap to invite" until they arrive
   cloudFetchNote(code).then(showCloudNote);   // a note waiting for me from before
-  setNetStatus('waiting for your partner…');
   room = window.__joinRoom({ appId: 'breath-mirror-longdistance' }, code);
   const sig  = room.makeAction('sig');  sendSig  = sig[0];  sig[1](data => handleData(data));
   const pic  = room.makeAction('pic');  sendPic  = pic[0];  pic[1](data => onRemotePhoto(data));
   const note = room.makeAction('note'); sendNote = note[0]; note[1](data => onRemoteNote(data));
   room.onPeerJoin(() => onPeerConnected());
-  room.onPeerLeave(() => {
-    connected = false;
-    connBadge.textContent = '· away for now';
-    connBadge.classList.remove('together');
-    connBadge.classList.add('away');
-  });
+  room.onPeerLeave(() => onPeerGone());
 }
 
 function handleData(msg) {
@@ -882,11 +1020,37 @@ function playLive(img, frames) {
   liveTimer = setInterval(() => { i = (i + 1) % frames.length; img.src = frames[i]; }, LIVE_STEP_MS);
 }
 
-// Show a received note as a card that STAYS until dismissed (no fade).
-// A "live" note loops its last second like an iPhone Live Photo.
-function showNoteCard(data) {
-  const note = parseNote(data);
-  if (!note) return;
+// ── Note archive: keep the last 5 received notes per room, browsable ──
+let noteArchive = [];   // payload strings, newest first (max 5)
+let archiveIdx = 0;
+function loadArchive(room) {
+  try { const a = JSON.parse(localStorage.getItem('bm-archive-' + room) || '[]'); return Array.isArray(a) ? a : []; }
+  catch (e) { return []; }
+}
+function saveArchive(room) {
+  try { localStorage.setItem('bm-archive-' + room, JSON.stringify(noteArchive.slice(0, 5))); } catch (e) {}
+}
+function archiveNote(payload) {
+  noteArchive.unshift(payload);
+  if (noteArchive.length > 5) noteArchive = noteArchive.slice(0, 5);
+  saveArchive(currentRoom || 'solo');
+  updateNotesChip();
+}
+function updateNotesChip() {
+  const chip = document.getElementById('notesChip');
+  if (!chip) return;
+  if (noteArchive.length) { chip.style.display = 'block'; chip.textContent = '💌 ' + noteArchive.length; }
+  else { chip.style.display = 'none'; }
+}
+function updateArchiveNav() {
+  const nav = document.getElementById('noteNav');
+  if (!nav) return;
+  if (noteArchive.length > 1) {
+    nav.style.display = 'flex';
+    document.getElementById('noteCount').textContent = (archiveIdx + 1) + ' / ' + noteArchive.length;
+  } else { nav.style.display = 'none'; }
+}
+function renderNoteIntoCard(note) {
   const card = document.getElementById('noteCard');
   const img = document.getElementById('noteImg');
   stopLivePlayback();
@@ -899,8 +1063,23 @@ function showNoteCard(data) {
     card.classList.remove('live');
     img.src = note.cover;
   }
+}
+function openCardAt(idx) {
+  if (!noteArchive.length) return;
+  archiveIdx = Math.max(0, Math.min(idx, noteArchive.length - 1));
+  const note = parseNote(noteArchive[archiveIdx]);
+  if (!note) return;
+  renderNoteIntoCard(note);
+  updateArchiveNav();
+  const card = document.getElementById('noteCard');
   card.hidden = false;
   setTimeout(() => card.classList.add('show'), 20);
+}
+
+// Show a received note: archive it (last 5) and open the card at the newest.
+function showNoteCard(data) {
+  archiveNote(data);
+  openCardAt(0);
   setStatus('💌 left for you', 3500);
 }
 function loadSavedNote(room) {
@@ -955,6 +1134,39 @@ function leaveNote() {
   });
 }
 
+// ── First-run how-to walkthrough (step by step) ──
+const HOWTO = [
+  { icon: '👄', title: 'Fog it up', text: "Open your mouth, like breathing on cold glass — the mirror mists over. No mic, so chatting won't set it off." },
+  { icon: '🤏', title: 'Pinch to draw', text: 'Touch your thumb and index finger together and move your hand. Wipe a peek-hole, or draw a little heart in the fog.' },
+  { icon: '✌️', title: 'Snap a selfie', text: 'Make an "L" with both hands and hold ~1.5s — a 3·2·1 photo. It lands in the strip below.' },
+  { icon: '✎', title: 'Leave a mark', text: 'Fog up, draw something, then tap "leave mark". Your partner gets it — even the last second of you drawing, like a Live Photo.' },
+  { icon: '💙', title: 'Be together', text: 'Share your room name or invite link. Same room = you both fog the very same glass, live.' },
+];
+let htIdx = 0;
+function renderHowto() {
+  const s = HOWTO[htIdx];
+  document.getElementById('htIcon').textContent = s.icon;
+  document.getElementById('htTitle').textContent = s.title;
+  document.getElementById('htText').textContent = s.text;
+  document.getElementById('htDots').innerHTML = HOWTO.map((_, i) => '<span class="' + (i === htIdx ? 'on' : '') + '"></span>').join('');
+  document.getElementById('htNext').textContent = htIdx === HOWTO.length - 1 ? 'let’s go ♡' : 'next';
+}
+function showHowto() {
+  htIdx = 0; renderHowto();
+  const el = document.getElementById('howto');
+  el.hidden = false; setTimeout(() => el.classList.add('show'), 20);
+}
+function hideHowto() {
+  const el = document.getElementById('howto');
+  el.classList.remove('show'); setTimeout(() => { el.hidden = true; }, 300);
+  try { localStorage.setItem('bm-onboarded', '1'); } catch (e) {}
+}
+document.getElementById('htNext').addEventListener('click', () => {
+  if (htIdx < HOWTO.length - 1) { htIdx++; renderHowto(); } else hideHowto();
+});
+document.getElementById('htSkip').addEventListener('click', hideHowto);
+document.getElementById('helpBtn').addEventListener('click', showHowto);
+
 // Lobby controls
 const enterBtn = document.getElementById('enterBtn');
 enterBtn.addEventListener('click', () => {
@@ -963,14 +1175,45 @@ enterBtn.addEventListener('click', () => {
   joinBreathRoom(code);
 });
 roomInput.addEventListener('keydown', e => { if (e.key === 'Enter') enterBtn.click(); });
-document.getElementById('soloBtn').addEventListener('click', () => {
-  lobbyEl.style.opacity = '0';
-  setTimeout(() => { lobbyEl.style.display = 'none'; }, 300);
+// Invite: while waiting alone, tapping the badge copies a link that drops your partner straight in.
+connBadge.addEventListener('click', () => {
+  if (connected || !currentRoom) return;
+  const link = location.origin + location.pathname + '#' + encodeURIComponent(currentRoom);
+  if (navigator.clipboard) navigator.clipboard.writeText(link);
+  connBadge.textContent = '✓ invite link copied';
+  setTimeout(() => { if (!connected) connBadge.textContent = '◌ waiting · tap to invite'; }, 1800);
 });
 
 // Suggest a room name so one person can just share it.
 roomInput.value = 'bm-' + Math.random().toString(36).slice(2, 7);
-setNetStatus('Enter the same room name on both sides, then press Enter');
+setNetStatus('Enter a room name — you can start alone and invite your partner.');
+
+// Opened via an invite link (#room)? Prefill and drop straight in.
+const inviteRoom = decodeURIComponent((location.hash || '').replace(/^#/, '')).trim();
+if (inviteRoom) { roomInput.value = inviteRoom; joinBreathRoom(inviteRoom); }
+
+// ── Landing: cursor / finger wipes the fog (the app's gesture, previewed) ──
+(function () {
+  function wipe(x, y) {
+    const r = lobbyEl.getBoundingClientRect();
+    lobbyEl.style.setProperty('--mx', (x - r.left) + 'px');
+    lobbyEl.style.setProperty('--my', (y - r.top) + 'px');
+  }
+  lobbyEl.addEventListener('pointermove', e => wipe(e.clientX, e.clientY));
+})();
+
+// ── Landing: font compare toggle (Unbounded ⇄ Clash Display) ──
+(function () {
+  const fonts = [['Unbounded', 'Unbounded'], ['Clash Display', 'Clash Display']];
+  let i = 0;
+  const btn = document.getElementById('fontToggle');
+  const apply = () => {
+    document.documentElement.style.setProperty('--display-font', "'" + fonts[i][0] + "'");
+    btn.textContent = 'font · ' + fonts[i][1] + ' ⇄';
+  };
+  apply();
+  btn.addEventListener('click', () => { i = (i + 1) % fonts.length; apply(); });
+})();
 
 startCamera();
 </script>
