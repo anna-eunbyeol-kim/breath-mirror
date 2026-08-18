@@ -13,7 +13,7 @@
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { background: #000; overflow: hidden; width: 100vw; height: 100vh; height: 100dvh; cursor: default; }
-  #container { position: relative; width: 100vw; height: 100vh; height: 100dvh; }
+  #container { position: relative; width: 100vw; height: 100vh; height: 100dvh; touch-action: none; }
   video { position: absolute; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); opacity: 0; pointer-events: none; }
   canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
   #cameraCanvas { z-index: 1; }
@@ -206,13 +206,6 @@
     margin-top: 12px; font-size: 11px; color: rgba(255,255,255,0.9);
     min-height: 14px; letter-spacing: 0.03em; line-height: 1.4; text-shadow: 0 1px 6px rgba(0,0,0,0.3);
   }
-  #fontToggle {
-    position: absolute; top: 16px; right: 16px; z-index: 4; pointer-events: auto;
-    background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.5); color: #fff;
-    padding: 6px 11px; border-radius: 20px; font-size: 10px; font-weight: 700; cursor: pointer;
-    font-family: 'Pretendard', sans-serif; letter-spacing: 0.04em; backdrop-filter: blur(6px);
-  }
-  #fontToggle:hover { background: rgba(0,0,0,0.6); }
 
   #connBadge {
     position: fixed; top: 20px; left: 20px; z-index: 56; display: none;
@@ -307,7 +300,6 @@
 <div id="breathRing"></div>
 <div id="countdown"></div>
 <div id="btnGroup">
-  <button id="helpBtn" title="how to play">? how</button>
   <button id="leaveBtn">✎ leave mark</button>
   <button id="undoBtn">↩ undo</button>
   <button id="clearBtn">✕ clear</button>
@@ -350,7 +342,6 @@
   <div class="glass-sharp"></div>
   <div class="glass-frost"></div>
   <div class="glass-grain"></div>
-  <button id="fontToggle">font · Unbounded ⇄</button>
   <div class="lobby-ui">
     <div class="lobby-head">
       <h1>Fogether<span>for two</span></h1>
@@ -400,6 +391,8 @@ const photoStrip   = document.getElementById('photoStrip');
 
 const offscreen = document.createElement('canvas');
 const offCtx    = offscreen.getContext('2d');
+const blurSmall = document.createElement('canvas');   // low-res buffer for a mobile-safe blur
+const smallCtx  = blurSmall.getContext('2d');
 
 let W = 0, H = 0, fogReady = false;
 
@@ -450,10 +443,19 @@ function render() {
   const r = videoCoverRect();
   camCtx.save(); camCtx.translate(W, 0); camCtx.scale(-1, 1);
   camCtx.drawImage(video, r.sx, r.sy, r.sw, r.sh, 0, 0, W, H); camCtx.restore();
-  offCtx.save();
-  offCtx.filter = 'blur(14px) brightness(1.05)';
-  offCtx.translate(W, 0); offCtx.scale(-1, 1);
-  offCtx.drawImage(video, r.sx, r.sy, r.sw, r.sh, 0, 0, W, H); offCtx.restore();
+  // Blur by downscaling then upscaling — ctx.filter 'blur' is unsupported on many
+  // mobile browsers (iOS Safari), which is why mobile only saw a white haze before.
+  const bw = 150, bh = Math.max(1, Math.round(bw * H / W));
+  if (blurSmall.width !== bw)  blurSmall.width  = bw;
+  if (blurSmall.height !== bh) blurSmall.height = bh;
+  smallCtx.save();
+  smallCtx.clearRect(0, 0, bw, bh);
+  smallCtx.translate(bw, 0); smallCtx.scale(-1, 1);
+  smallCtx.drawImage(video, r.sx, r.sy, r.sw, r.sh, 0, 0, bw, bh);
+  smallCtx.restore();
+  offCtx.clearRect(0, 0, W, H);
+  offCtx.imageSmoothingEnabled = true; offCtx.imageSmoothingQuality = 'high';
+  offCtx.drawImage(blurSmall, 0, 0, bw, bh, 0, 0, W, H);   // upscale = blur
   offCtx.fillStyle = 'rgba(205,218,228,0.35)';
   offCtx.fillRect(0, 0, W, H);
   blurCtx.clearRect(0, 0, W, H);
@@ -906,7 +908,7 @@ function enterApp() {
   try { if (!localStorage.getItem('bm-onboarded')) setTimeout(showHowto, 650); } catch (e) {}
 }
 function showWaitingBadge() {
-  connBadge.textContent = '◌ waiting · tap to invite';
+  connBadge.textContent = '◌ ' + (currentRoom || '') + ' · tap to copy invite';
   connBadge.classList.add('waiting');
   connBadge.classList.remove('together', 'away');
   connBadge.style.display = 'block';
@@ -922,7 +924,7 @@ function onPeerConnected() {
 }
 function onPeerGone() {
   connected = false;
-  connBadge.textContent = '◌ waiting · tap to invite';
+  connBadge.textContent = '◌ ' + (currentRoom || '') + ' · tap to copy invite';
   connBadge.classList.add('waiting');
   connBadge.classList.remove('together', 'away');
 }
@@ -1165,7 +1167,6 @@ document.getElementById('htNext').addEventListener('click', () => {
   if (htIdx < HOWTO.length - 1) { htIdx++; renderHowto(); } else hideHowto();
 });
 document.getElementById('htSkip').addEventListener('click', hideHowto);
-document.getElementById('helpBtn').addEventListener('click', showHowto);
 
 // Lobby controls
 const enterBtn = document.getElementById('enterBtn');
@@ -1181,7 +1182,7 @@ connBadge.addEventListener('click', () => {
   const link = location.origin + location.pathname + '#' + encodeURIComponent(currentRoom);
   if (navigator.clipboard) navigator.clipboard.writeText(link);
   connBadge.textContent = '✓ invite link copied';
-  setTimeout(() => { if (!connected) connBadge.textContent = '◌ waiting · tap to invite'; }, 1800);
+  setTimeout(() => { if (!connected) connBadge.textContent = '◌ ' + (currentRoom || '') + ' · tap to copy invite'; }, 1800);
 });
 
 // Suggest a room name so one person can just share it.
@@ -1202,17 +1203,25 @@ if (inviteRoom) { roomInput.value = inviteRoom; joinBreathRoom(inviteRoom); }
   lobbyEl.addEventListener('pointermove', e => wipe(e.clientX, e.clientY));
 })();
 
-// ── Landing: font compare toggle (Unbounded ⇄ Clash Display) ──
+// ── Touch / mouse drag to wipe (phones can't see your hand, so drag on screen) ──
 (function () {
-  const fonts = [['Unbounded', 'Unbounded'], ['Clash Display', 'Clash Display']];
-  let i = 0;
-  const btn = document.getElementById('fontToggle');
-  const apply = () => {
-    document.documentElement.style.setProperty('--display-font', "'" + fonts[i][0] + "'");
-    btn.textContent = 'font · ' + fonts[i][1] + ' ⇄';
-  };
-  apply();
-  btn.addEventListener('click', () => { i = (i + 1) % fonts.length; apply(); });
+  const container = document.getElementById('container');
+  let drawing = false;
+  container.addEventListener('pointerdown', e => {
+    if (e.target.tagName !== 'CANVAS') return;   // ignore taps on buttons / overlays
+    if (!fogReady) return;                        // nothing to wipe until it's fogged
+    drawing = true;
+    saveSnapshot();
+    resetDraw();
+    eraseAt(e.clientX, e.clientY); recordLiveFrame();
+  });
+  window.addEventListener('pointermove', e => {
+    if (!drawing) return;
+    eraseAt(e.clientX, e.clientY); recordLiveFrame();
+  });
+  const stop = () => { if (drawing) { drawing = false; resetDraw(); } };
+  window.addEventListener('pointerup', stop);
+  window.addEventListener('pointercancel', stop);
 })();
 
 startCamera();
