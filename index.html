@@ -395,6 +395,13 @@ const offscreen = document.createElement('canvas');
 const offCtx    = offscreen.getContext('2d');
 const blurSmall = document.createElement('canvas');   // low-res buffer for a mobile-safe blur
 const smallCtx  = blurSmall.getContext('2d');
+// Does this browser support high-quality canvas blur via ctx.filter? Desktop: yes.
+// Many mobile browsers (older iOS Safari): no — those fall back to a downscale blur.
+const supportsCtxFilter = (function () {
+  try { const x = document.createElement('canvas').getContext('2d');
+    if (!('filter' in x)) return false; x.filter = 'blur(4px)'; return x.filter === 'blur(4px)'; }
+  catch (e) { return false; }
+})();
 
 let W = 0, H = 0, fogReady = false;
 
@@ -445,19 +452,30 @@ function render() {
   const r = videoCoverRect();
   camCtx.save(); camCtx.translate(W, 0); camCtx.scale(-1, 1);
   camCtx.drawImage(video, r.sx, r.sy, r.sw, r.sh, 0, 0, W, H); camCtx.restore();
-  // Blur by downscaling then upscaling — ctx.filter 'blur' is unsupported on many
-  // mobile browsers (iOS Safari), which is why mobile only saw a white haze before.
-  const bw = 150, bh = Math.max(1, Math.round(bw * H / W));
-  if (blurSmall.width !== bw)  blurSmall.width  = bw;
-  if (blurSmall.height !== bh) blurSmall.height = bh;
-  smallCtx.save();
-  smallCtx.clearRect(0, 0, bw, bh);
-  smallCtx.translate(bw, 0); smallCtx.scale(-1, 1);
-  smallCtx.drawImage(video, r.sx, r.sy, r.sw, r.sh, 0, 0, bw, bh);
-  smallCtx.restore();
   offCtx.clearRect(0, 0, W, H);
-  offCtx.imageSmoothingEnabled = true; offCtx.imageSmoothingQuality = 'high';
-  offCtx.drawImage(blurSmall, 0, 0, bw, bh, 0, 0, W, H);   // upscale = blur
+  if (supportsCtxFilter) {
+    // High-quality gaussian blur at full resolution (desktop and modern browsers).
+    offCtx.save();
+    offCtx.filter = 'blur(14px) brightness(1.04)';
+    offCtx.translate(W, 0); offCtx.scale(-1, 1);
+    offCtx.drawImage(video, r.sx, r.sy, r.sw, r.sh, 0, 0, W, H);
+    offCtx.restore();
+    offCtx.filter = 'none';
+  } else {
+    // Fallback for browsers without ctx.filter: downscale then upscale. Resolution is
+    // screen-proportional (not a fixed 150px) so it stays smooth instead of blocky.
+    const bw = Math.min(W, Math.max(160, Math.round(W / 3))), bh = Math.max(1, Math.round(bw * H / W));
+    if (blurSmall.width !== bw)  blurSmall.width  = bw;
+    if (blurSmall.height !== bh) blurSmall.height = bh;
+    smallCtx.save();
+    smallCtx.clearRect(0, 0, bw, bh);
+    smallCtx.imageSmoothingEnabled = true; smallCtx.imageSmoothingQuality = 'high';
+    smallCtx.translate(bw, 0); smallCtx.scale(-1, 1);
+    smallCtx.drawImage(video, r.sx, r.sy, r.sw, r.sh, 0, 0, bw, bh);
+    smallCtx.restore();
+    offCtx.imageSmoothingEnabled = true; offCtx.imageSmoothingQuality = 'high';
+    offCtx.drawImage(blurSmall, 0, 0, bw, bh, 0, 0, W, H);   // upscale = blur
+  }
   offCtx.fillStyle = 'rgba(205,218,228,0.35)';
   offCtx.fillRect(0, 0, W, H);
   blurCtx.clearRect(0, 0, W, H);
