@@ -649,7 +649,8 @@ function resetDraw() {
 // ── Live note: a rolling ~1s buffer of the glass while you're drawing ──
 // Like an iPhone Live Photo — we keep the last second of frames so a note
 // can play back the moment you drew it, not just the final still.
-const LIVE_MS = 1000, LIVE_STEP_MS = 90, LIVE_W = 320;
+const LIVE_MS = 3000, LIVE_STEP_MS = 100, LIVE_W = 720;   // up to 3s of motion at ~10fps, 720px frames
+const NOTE_MAX = 2800000;   // payload byte ceiling before we thin frames / fall back to a still
 let liveBuffer = [];        // { t, url } rolling window of recent frames
 let lastLiveCapture = 0;
 let lastStrokeClip = null;  // frames[] captured at the end of the most recent stroke
@@ -658,7 +659,7 @@ function recordLiveFrame() {
   const now = Date.now();
   if (now - lastLiveCapture < LIVE_STEP_MS) return;
   lastLiveCapture = now;
-  liveBuffer.push({ t: now, url: composeGlass(LIVE_W).toDataURL('image/jpeg', 0.5) });
+  liveBuffer.push({ t: now, url: composeGlass(LIVE_W).toDataURL('image/jpeg', 0.52) });
   const cutoff = now - LIVE_MS - 250;
   while (liveBuffer.length && liveBuffer[0].t < cutoff) liveBuffer.shift();
 }
@@ -872,7 +873,7 @@ faceMesh.onResults(results => {
 async function startCamera() {
   try {
     const stream = await navigator.mediaDevices.getUserMedia({
-      video: { width:{ideal:1280}, height:{ideal:720}, facingMode:'user' }, audio: false
+      video: { width:{ideal:1920}, height:{ideal:1080}, facingMode:'user' }, audio: false
     });
     video.srcObject = stream; await video.play();
     const mpCam = new Camera(video, {
@@ -1029,6 +1030,22 @@ function composeGlass(maxW) {
   return c;
 }
 
+// Like composeGlass, but pulls the camera straight from the video at its native
+// resolution so the cover can be larger/sharper than the on-screen canvas (up to ~1920).
+function composeGlassHi(targetW) {
+  const sw = Math.max(1, Math.round(targetW));
+  const sh = Math.max(1, Math.round(targetW * H / W));
+  const c = document.createElement('canvas'); c.width = sw; c.height = sh;
+  const cx = c.getContext('2d');
+  const r = videoCoverRect();
+  cx.save(); cx.translate(sw, 0); cx.scale(-1, 1);             // mirror to match the mirror view
+  cx.drawImage(video, r.sx, r.sy, r.sw, r.sh, 0, 0, sw, sh);   // sharp camera at native res
+  cx.restore();
+  cx.imageSmoothingEnabled = true; cx.imageSmoothingQuality = 'high';
+  cx.drawImage(blurCanvas, 0, 0, sw, sh);                      // fog + drawing on top
+  return c;
+}
+
 // Parse a stored note: JSON payload {type,frames?,cover}, or a legacy plain dataURL.
 function parseNote(data) {
   if (!data) return null;
@@ -1039,9 +1056,18 @@ function parseNote(data) {
 
 let liveTimer = null;
 function stopLivePlayback() { if (liveTimer) { clearInterval(liveTimer); liveTimer = null; } }
-function playLive(img, frames) {
+function playLive(img, frames, cover) {
+  stopLivePlayback();
   let i = 0; img.src = frames[0];
-  liveTimer = setInterval(() => { i = (i + 1) % frames.length; img.src = frames[i]; }, LIVE_STEP_MS);
+  liveTimer = setInterval(() => {
+    i++;
+    if (i >= frames.length) {                        // played the whole moment once
+      stopLivePlayback();
+      img.src = cover || frames[frames.length - 1];  // settle on the sharp hi-res still
+      return;
+    }
+    img.src = frames[i];
+  }, LIVE_STEP_MS);
 }
 
 // ── Note archive: keep the last 5 received notes per room, browsable ──
@@ -1081,10 +1107,13 @@ function renderNoteIntoCard(note) {
   if (note.type === 'live' && note.frames && note.frames.length >= 2) {
     card.dataset.url = note.cover || note.frames[note.frames.length - 1];
     card.classList.add('live');
-    playLive(img, note.frames);
+    img.style.cursor = 'pointer'; img.title = 'tap to replay';
+    img.onclick = () => playLive(img, note.frames, card.dataset.url);
+    playLive(img, note.frames, card.dataset.url);
   } else {
     card.dataset.url = note.cover;
     card.classList.remove('live');
+    img.onclick = null; img.style.cursor = ''; img.removeAttribute('title');
     img.src = note.cover;
   }
 }
@@ -1136,18 +1165,19 @@ function showCloudNote(note) {
 
 function leaveNote() {
   if (!fogReady) { setStatus('write on the glass first', 2000); return; }
-  // a "live" note if you just drew (last ~1s of frames), else a still photo
+  // The cover (the still you keep and look at) is always high-res, like a photo.
+  const hiCover = composeGlassHi(1920).toDataURL('image/jpeg', 0.85);
+  // a "live" note if you just drew (last ~3s of motion frames), else a still photo
   let note = (lastStrokeClip && lastStrokeClip.length >= 2)
-    ? { v: 1, type: 'live', frames: lastStrokeClip.slice(), cover: lastStrokeClip[lastStrokeClip.length - 1] }
-    : { v: 1, type: 'still', cover: composeGlass(900).toDataURL('image/jpeg', 0.78) };
+    ? { v: 1, type: 'live', frames: lastStrokeClip.slice(), cover: hiCover }
+    : { v: 1, type: 'still', cover: hiCover };
   let payload = JSON.stringify(note);
-  // stay under the cloud size limit: thin frames first, then fall back to a still
-  while (note.type === 'live' && payload.length > 380000 && note.frames.length > 3) {
+  // stay under the size limit: thin the motion frames first (keep the hi-res cover), then fall back to a still
+  while (note.type === 'live' && payload.length > NOTE_MAX && note.frames.length > 3) {
     note.frames = note.frames.filter((_, i) => i % 2 === 0);
-    note.cover = note.frames[note.frames.length - 1];
     payload = JSON.stringify(note);
   }
-  if (payload.length > 380000) { note = { v: 1, type: 'still', cover: note.cover }; payload = JSON.stringify(note); }
+  if (payload.length > NOTE_MAX) { note = { v: 1, type: 'still', cover: note.cover }; payload = JSON.stringify(note); }
   savedNote = payload;
   try { localStorage.setItem('bm-note-' + (currentRoom || 'solo'), payload); } catch (e) {}
   if (sendNote && connected) sendNote(payload);   // instant, if they're online now
