@@ -135,6 +135,10 @@
   }
   #lobbyVideo {
     position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; object-fit: cover;
+    /* Some GPUs play the video but paint it black when it uses a hardware overlay.
+       Forcing it onto its own composited layer fixes that. */
+    transform: translateZ(0); -webkit-transform: translateZ(0);
+    will-change: transform; -webkit-backface-visibility: hidden; backface-visibility: hidden;
   }
   .glass-sharp {   /* fallback gradient — only seen if the video can't load */
     position: absolute; inset: 0; z-index: -1; background-size: cover; background-position: center;
