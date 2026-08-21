@@ -1344,6 +1344,25 @@ if (inviteRoom) { roomInput.value = inviteRoom; joinBreathRoom(inviteRoom); }
   ['pointerdown', 'touchstart', 'keydown'].forEach(ev => window.addEventListener(ev, playAll, { once: true }));
 })();
 
+// TEMP video diagnostics — a small green box shows the <video> element's internal state.
+// (Remove this block once the video works.)
+(function () {
+  const v = document.getElementById('lobbyVideo');
+  if (!v) return;
+  const d = document.createElement('div');
+  d.style.cssText = 'position:fixed;top:8px;left:8px;z-index:99999;background:rgba(0,0,0,.85);color:#0f0;font:12px/1.5 monospace;padding:8px 10px;border-radius:6px;white-space:pre;pointer-events:none';
+  document.body.appendChild(d);
+  const NET = ['EMPTY','IDLE','LOADING','NO_SOURCE'], RDY = ['HAVE_NOTHING','HAVE_METADATA','HAVE_CURRENT','HAVE_FUTURE','HAVE_ENOUGH'];
+  const upd = () => { d.textContent =
+    'readyState: ' + v.readyState + ' (' + (RDY[v.readyState]||'?') + ')' +
+    '\nnetworkState: ' + v.networkState + ' (' + (NET[v.networkState]||'?') + ')' +
+    '\nerror: ' + (v.error ? v.error.code + ' / ' + (v.error.message||'') : 'none') +
+    '\npaused: ' + v.paused + '   currentTime: ' + v.currentTime.toFixed(1) +
+    '\nvideoSize: ' + v.videoWidth + ' x ' + v.videoHeight +
+    '\ncurrentSrc: ' + (v.currentSrc ? v.currentSrc.split('/').pop() : '(none)'); };
+  setInterval(upd, 300); upd();
+})();
+
 startCamera();
 </script>
 </body>
