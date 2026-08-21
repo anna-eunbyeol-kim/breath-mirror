@@ -163,7 +163,7 @@
     color: rgba(255,255,255,0.95); text-shadow: 0 2px 30px rgba(110,110,135,0.35);
   }
   .lobby-form {
-    position: absolute; right: clamp(28px, 5vw, 64px); top: 50%; transform: translateY(-50%);
+    position: absolute; left: clamp(28px, 5vw, 64px); bottom: clamp(28px, 5vw, 54px);
     width: min(320px, 42vw); pointer-events: auto;
   }
   .lobby-form label {
@@ -187,7 +187,7 @@
   .lobby-form .hint { margin-top: 11px; font-family: 'Pretendard', sans-serif; font-size: 11px; color: rgba(255,255,255,0.8); line-height: 1.6; }
   .lobby-form .netstatus { margin-top: 10px; font-family: 'Pretendard', sans-serif; font-size: 11px; color: rgba(255,255,255,0.9); min-height: 14px; line-height: 1.4; text-shadow: 0 1px 6px rgba(0,0,0,0.25); }
   .lobby-brand {
-    position: absolute; left: clamp(28px, 5vw, 64px); bottom: clamp(28px, 5vw, 54px);
+    position: absolute; right: clamp(28px, 5vw, 64px); top: clamp(28px, 5vw, 54px);
     font-family: 'Rubik Bubbles', system-ui, sans-serif; font-size: clamp(24px, 2.6vw, 36px);
     color: rgba(255,255,255,0.95); line-height: 1;
   }
@@ -259,11 +259,11 @@
     #connBadge { top: 12px; left: 12px; font-size: 10px; padding: 6px 10px; }
     #status { bottom: 148px; font-size: 10px; letter-spacing: 0.12em; }
     #breathRing { bottom: 100px; width: 40px; height: 40px; }
-    .lobby-ui { padding: 24px 20px; }
-    .lobby-head { max-width: 100%; }
-    .lobby-head h1 { font-size: clamp(34px, 11vw, 60px); }
-    .lobby-form { position: static; transform: none; width: 100%; margin-top: 22px; }
-    .lobby-brand { position: static; margin-top: 24px; }
+    /* stack the brand + room form at the bottom (brand on top, form below it) so they
+       don't ride up over the headline that's baked into the canvas */
+    .lobby-ui { padding: 22px 20px; display: flex; flex-direction: column; justify-content: flex-end; }
+    .lobby-brand { position: static; left: auto; bottom: auto; order: 1; }
+    .lobby-form { position: static; top: auto; right: auto; transform: none; width: 100%; order: 2; margin-top: 16px; }
     #photoStrip { height: 72px; gap: 6px; padding: 6px 10px; }
     .photo-thumb { height: 56px; }
     #noteCard .note-inner { padding: 10px 10px 12px; }
@@ -331,7 +331,7 @@
   <canvas id="lobbyCanvas"></canvas>
   <canvas id="lobbyFrostCanvas"></canvas>
   <video id="lobbyVideo" src="landing.mp4" autoplay muted loop playsinline preload="auto"></video>
-  <h1 class="sr-only">Fog up the same glass and wipe it clear, together</h1>
+  <h1 class="sr-only">Breath on the same glass — even far apart</h1>
   <div class="lobby-ui">
     <div class="lobby-form">
       <label for="roomInput">Room name</label>
@@ -1350,8 +1350,7 @@ if (inviteRoom) { roomInput.value = inviteRoom; joinBreathRoom(inviteRoom); }
   const fc = document.getElementById('lobbyFrostCanvas');
   if (!v || !c || !fc) return;
   const ctx = c.getContext('2d'), fctx = fc.getContext('2d');
-  const small = document.createElement('canvas'), sctx = small.getContext('2d');
-  const LINES = ['Fog up the', 'same glass', 'and', 'wipe it clear,', 'together'];
+  const LINES = ['Breath on the', 'same glass', 'even far apart'];
   let W = 2, H = 2;
   function resize() {
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -1365,15 +1364,16 @@ if (inviteRoom) { roomInput.value = inviteRoom; joinBreathRoom(inviteRoom); }
     const vw = v.videoWidth, vh = v.videoHeight;
     if (vw && vh) {
       const s = Math.max(W / vw, H / vh), dw = vw * s, dh = vh * s, dx = (W - dw) / 2, dy = (H - dh) / 2;
-      ctx.drawImage(v, dx, dy, dw, dh);                          // sharp background
-      const bw = 160, bh = Math.max(1, Math.round(bw * H / W));  // cheap blur: downscale then upscale
-      if (small.width !== bw) { small.width = bw; small.height = bh; }
-      sctx.drawImage(c, 0, 0, W, H, 0, 0, bw, bh);
-      fctx.imageSmoothingEnabled = true;
+      ctx.drawImage(v, dx, dy, dw, dh);                          // sharp video (shows through the letters)
+      // frost = the same video, smoothly (gaussian) blurred + a slight tint
       fctx.clearRect(0, 0, W, H);
-      fctx.drawImage(small, 0, 0, bw, bh, 0, 0, W, H);           // blurred video
+      const blurPx = 26.7 * (W / window.innerWidth);             // real gaussian, matches the design's blur(26.7px)
+      if (supportsCtxFilter) fctx.filter = 'blur(' + blurPx + 'px)';
+      const os = s * 1.2, odw = vw * os, odh = vh * os;          // overscan so the blur's soft edges fall off-canvas
+      fctx.drawImage(v, (W - odw) / 2, (H - odh) / 2, odw, odh);
+      fctx.filter = 'none';
       fctx.fillStyle = 'rgba(0,0,0,0.28)';
-      fctx.fillRect(0, 0, W, H);                                 // frost tint
+      fctx.fillRect(0, 0, W, H);                                 // frost tint (letters knocked out below)
       const sc = W / 1492;                                       // match the 1492-wide Figma layout
       fctx.globalCompositeOperation = 'destination-out';        // knock the letters out of the frost
       fctx.fillStyle = '#000';
