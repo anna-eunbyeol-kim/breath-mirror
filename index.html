@@ -311,7 +311,7 @@
     <div class="howto-text" id="htText"></div>
     <div class="howto-dots" id="htDots"></div>
     <div class="howto-actions">
-      <button id="htSkip" class="ht-skip">Skip</button>
+      <button id="htSkip" class="ht-skip">skip</button>
       <button id="htNext" class="ht-next">Next</button>
     </div>
   </div>
@@ -1165,11 +1165,9 @@ function leaveNote() {
 
 // ── First-run how-to walkthrough (step by step) ──
 const HOWTO = [
-  { icon: '👄', img: 'ob-fog.png',   title: 'Fog it up', text: "Open your mouth, like breathing on cold glass — the mirror mists over. No mic, so chatting won't set it off." },
-  { icon: '🤏', img: 'ob-pinch.png', title: 'Pinch to draw', text: 'Touch your thumb and index finger together and move your hand. Wipe a peek-hole, or draw a little heart in the fog.' },
-  { icon: '✌️', title: 'Snap a selfie', text: 'Make an "L" with both hands and hold ~1.5s — a 3·2·1 photo. It lands in the strip below.' },
-  { icon: '✎', img: 'ob-mark.png',   title: 'Leave a mark', text: 'Fog up, draw something, then tap "Leave mark". Your partner gets it — even the last second of you drawing, like a Live Photo.' },
-  { icon: '💙', title: 'Be together', text: 'Share your room name or invite link. Same room = you both fog the very same glass, live.' },
+  { icon: '👄', img: 'ob-fog.png',   title: 'Fog it up', text: "Open your mouth, like breathing on cold glass. The mirror mists over. No mic, so chatting won't set it off." },
+  { icon: '🤏', img: 'ob-pinch.png', title: 'Pinch to draw', text: 'Touch your thumb and index finger together and move your hand. Wipe a peek hole, or draw a little heart in the fog.' },
+  { icon: '✎', img: 'ob-mark.png',   title: 'Leave a mark', text: 'Fog up, draw something, then tap "leave mark". Your partner gets it, even the last second of you drawing, like a Live Photo.' },
 ];
 let htIdx = 0;
 function renderHowto() {
@@ -1185,7 +1183,7 @@ function renderHowto() {
   document.getElementById('htTitle').textContent = s.title;
   document.getElementById('htText').textContent = s.text;
   document.getElementById('htDots').innerHTML = HOWTO.map((_, i) => '<span class="' + (i === htIdx ? 'on' : '') + '"></span>').join('');
-  document.getElementById('htNext').textContent = htIdx === HOWTO.length - 1 ? 'Let’s go ♡' : 'Next';
+  document.getElementById('htNext').textContent = htIdx === HOWTO.length - 1 ? 'Let’s go' : 'Next';
 }
 function showHowto() {
   htIdx = 0; renderHowto();
