@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@200;300;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Rubik+Bubbles&display=swap" rel="stylesheet">
 <link href="https://api.fontshare.com/v2/css?f[]=clash-display@200,300,400,500&display=swap" rel="stylesheet">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -133,9 +134,11 @@
     --mx: 50%; --my: 38%;
     transition: opacity 0.4s; font-family: 'Pretendard', sans-serif; background: #0e1220;
   }
-  .glass-sharp {
-    position: absolute; inset: 0; background-size: cover; background-position: center;
-    /* Fallback gradient — shown only if the animated background can't load */
+  #lobbyVideo {
+    position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; object-fit: cover;
+  }
+  .glass-sharp {   /* fallback gradient — only seen if the video can't load */
+    position: absolute; inset: 0; z-index: -1; background-size: cover; background-position: center;
     background-image:
       radial-gradient(38% 46% at 24% 30%, #ffd9a8, transparent 70%),
       radial-gradient(40% 44% at 74% 26%, #ff9e86, transparent 72%),
@@ -143,70 +146,62 @@
       radial-gradient(42% 40% at 30% 78%, #ffb3c8, transparent 70%),
       linear-gradient(160deg, #bfe0f5, #ffe6d8 55%, #f6ecd8);
   }
-  #auroraCanvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-  .glass-frost {
-    position: absolute; inset: 0; pointer-events: none;
-    background: rgba(255,255,255,0.10);
-    -webkit-mask: radial-gradient(circle at var(--mx) var(--my), transparent 0, transparent 62px, #000 155px);
-            mask: radial-gradient(circle at var(--mx) var(--my), transparent 0, transparent 62px, #000 155px);
+  /* the "fog": heavy blur + an Exclude wash over the video, wiped clear around the cursor */
+  .lobby-fog {
+    position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    -webkit-backdrop-filter: blur(44px) saturate(1.12);
+            backdrop-filter: blur(44px) saturate(1.12);
+    -webkit-mask: radial-gradient(circle at var(--mx) var(--my), transparent 0, transparent 74px, #000 200px);
+            mask: radial-gradient(circle at var(--mx) var(--my), transparent 0, transparent 74px, #000 200px);
   }
-  .glass-frost::after {
+  .lobby-fog::after {
     content: ''; position: absolute; inset: 0;
-    background:
-      repeating-linear-gradient(90deg, rgba(255,255,255,0.12) 0 2px, rgba(255,255,255,0) 2px 11px),
-      linear-gradient(rgba(250,248,244,0.14), rgba(250,248,244,0.14));
+    background: rgba(196,203,220,0.5); mix-blend-mode: exclude;
   }
   .glass-grain {
     position: absolute; inset: 0; mix-blend-mode: soft-light; opacity: 0.5; pointer-events: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
   .lobby-ui {
-    position: absolute; inset: 0; z-index: 3; padding: min(7vw, 54px);
-    display: flex; flex-direction: column; justify-content: space-between; pointer-events: none;
+    position: absolute; inset: 0; z-index: 5; pointer-events: none;
+    padding: clamp(28px, 5vw, 64px);
   }
-  .lobby-ui h1 {
-    font-family: var(--display-font, 'Unbounded'), system-ui, sans-serif;
-    font-weight: 200; font-size: clamp(34px, 9vw, 84px); letter-spacing: 0.05em;
-    color: #fff; line-height: 0.96; text-shadow: 0 2px 24px rgba(120,90,70,0.4);
+  .lobby-head { max-width: min(760px, 64vw); }
+  .lobby-head h1 {
+    margin: 0; font-family: 'Rubik Bubbles', system-ui, sans-serif; font-weight: 400;
+    font-size: clamp(40px, 6.6vw, 100px); line-height: 0.89; letter-spacing: 0;
+    color: rgba(255,255,255,0.95); text-shadow: 0 2px 30px rgba(110,110,135,0.35);
   }
-  .lobby-ui h1 span {
-    display: block; font-weight: 300; font-size: 0.4em; letter-spacing: 0.34em;
-    color: rgba(255,255,255,0.92); margin-top: 0.18em;
+  .lobby-form {
+    position: absolute; right: clamp(28px, 5vw, 64px); top: 50%; transform: translateY(-50%);
+    width: min(320px, 42vw); pointer-events: auto;
   }
-  .lobby-ui .sub {
-    margin-top: 14px; font-size: 13px; color: rgba(255,255,255,0.9); line-height: 1.5; max-width: 340px;
+  .lobby-form label {
+    display: block; font-family: 'Pretendard', sans-serif; font-size: 10px; letter-spacing: 0.18em;
+    text-transform: uppercase; color: rgba(255,255,255,0.85); margin-bottom: 10px;
   }
-  .lobby-foot { pointer-events: auto; max-width: 340px; }
-  .lobby-foot label {
-    display: block; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
-    color: rgba(255,255,255,0.8); margin-bottom: 7px;
+  .lobby-form .join { display: flex; gap: 8px; }
+  .lobby-form .join input {
+    flex: 1; background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.55);
+    color: #fff; padding: 12px 14px; border-radius: 12px; font-size: 14px;
+    font-family: 'Pretendard', sans-serif; outline: none;
+    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
   }
-  .lobby-foot .join { display: flex; gap: 8px; }
-  .lobby-foot .join input {
-    flex: 1; background: rgba(255,255,255,0.22); border: 1.5px solid rgba(255,255,255,0.6);
-    color: #fff; padding: 11px 13px; border-radius: 12px; font-size: 14px;
-    font-family: 'Pretendard', sans-serif; outline: none; backdrop-filter: blur(6px);
-  }
-  .lobby-foot .join input::placeholder { color: rgba(255,255,255,0.75); }
-  .lobby-foot .join button {
-    background: rgba(255,255,255,0.92); border: none; color: #b5643f; padding: 11px 18px;
+  .lobby-form .join input::placeholder { color: rgba(255,255,255,0.7); }
+  .lobby-form .join button {
+    background: rgba(255,255,255,0.92); border: none; color: #b5643f; padding: 12px 20px;
     border-radius: 12px; font-size: 13px; font-weight: 700; cursor: pointer;
-    font-family: 'Pretendard', sans-serif; letter-spacing: 0.02em; transition: all 0.15s;
+    font-family: 'Pretendard', sans-serif; transition: background 0.15s;
   }
-  .lobby-foot .join button:hover { background: #fff; }
-  .lobby-foot .hint { margin-top: 11px; font-size: 11px; color: rgba(255,255,255,0.78); line-height: 1.6; }
-  .lobby-foot .hint b { color: #fff; font-weight: 700; }
-  .lobby-meta { display: flex; align-items: center; justify-content: space-between; margin-top: 16px; }
-  .lobby-foot .solo {
-    background: transparent; border: none; color: rgba(255,255,255,0.7); font-weight: 600;
-    font-size: 12px; cursor: pointer; font-family: 'Pretendard', sans-serif; padding: 0;
+  .lobby-form .join button:hover { background: #fff; }
+  .lobby-form .hint { margin-top: 11px; font-family: 'Pretendard', sans-serif; font-size: 11px; color: rgba(255,255,255,0.8); line-height: 1.6; }
+  .lobby-form .netstatus { margin-top: 10px; font-family: 'Pretendard', sans-serif; font-size: 11px; color: rgba(255,255,255,0.9); min-height: 14px; line-height: 1.4; text-shadow: 0 1px 6px rgba(0,0,0,0.25); }
+  .lobby-brand {
+    position: absolute; left: clamp(28px, 5vw, 64px); bottom: clamp(28px, 5vw, 54px);
+    font-family: 'Rubik Bubbles', system-ui, sans-serif; font-size: clamp(24px, 2.6vw, 36px);
+    color: rgba(255,255,255,0.95); line-height: 1;
   }
-  .lobby-foot .solo:hover { color: #fff; }
-  .wipehint { display: block; margin-top: 14px; font-size: 10px; font-style: italic; color: rgba(255,255,255,0.6); }
-  .lobby-foot .netstatus {
-    margin-top: 12px; font-size: 11px; color: rgba(255,255,255,0.9);
-    min-height: 14px; letter-spacing: 0.03em; line-height: 1.4; text-shadow: 0 1px 6px rgba(0,0,0,0.3);
-  }
+  .lobby-brand span { color: rgba(255,255,255,0.6); margin-left: 10px; font-size: 0.66em; }
 
   #connBadge {
     position: fixed; top: 20px; left: 20px; z-index: 56; display: none;
@@ -274,8 +269,11 @@
     #connBadge { top: 12px; left: 12px; font-size: 10px; padding: 6px 10px; }
     #status { bottom: 148px; font-size: 10px; letter-spacing: 0.12em; }
     #breathRing { bottom: 100px; width: 40px; height: 40px; }
-    .lobby-ui { padding: 28px 22px; }
-    .lobby-ui h1 span { letter-spacing: 0.26em; }
+    .lobby-ui { padding: 24px 20px; }
+    .lobby-head { max-width: 100%; }
+    .lobby-head h1 { font-size: clamp(34px, 11vw, 60px); }
+    .lobby-form { position: static; transform: none; width: 100%; margin-top: 22px; }
+    .lobby-brand { position: static; margin-top: 24px; }
     #photoStrip { height: 72px; gap: 6px; padding: 6px 10px; }
     .photo-thumb { height: 56px; }
     #noteCard .note-inner { padding: 10px 10px 12px; }
@@ -341,24 +339,23 @@
 <div id="connBadge">💙 connected</div>
 <div id="lobby">
   <div class="glass-sharp"></div>
-  <canvas id="auroraCanvas"></canvas>
-  <div class="glass-frost"></div>
+  <video id="lobbyVideo" src="landing.mp4" autoplay muted loop playsinline></video>
+  <div class="lobby-fog"></div>
   <div class="glass-grain"></div>
   <div class="lobby-ui">
     <div class="lobby-head">
-      <h1>Fogether<span>for two</span></h1>
-      <p class="sub">breathe on the same glass — even far apart.</p>
+      <h1>Fog up the same glass and wipe it clear, together</h1>
     </div>
-    <div class="lobby-foot">
+    <div class="lobby-form">
       <label for="roomInput">Room name</label>
       <div class="join">
         <input id="roomInput" placeholder="our little room" autocomplete="off" autocapitalize="off" spellcheck="false" />
         <button id="enterBtn">enter</button>
       </div>
-      <p class="hint">Start alone — then share the name or link. Your partner joins anytime.</p>
+      <p class="hint">Enter a room name. You can start alone and invite your partner.</p>
       <div class="netstatus" id="netStatus"></div>
-      <span class="wipehint">✦ move your cursor to wipe the fog</span>
     </div>
+    <div class="lobby-brand">Fogether<span>for two</span></div>
   </div>
 </div>
 
@@ -926,8 +923,8 @@ function setNetStatus(t) { if (netStatus) netStatus.textContent = t; }
 function enterApp() {
   lobbyEl.style.opacity = '0';
   setTimeout(() => { lobbyEl.style.display = 'none'; }, 400);
-  // free the animated-background GPU once we're inside (camera + hand tracking need it)
-  setTimeout(() => { try { window.__auroraStop && window.__auroraStop(); } catch (e) {} }, 500);
+  // stop the landing video once we're inside (frees decode work for the camera)
+  setTimeout(() => { try { const lv = document.getElementById('lobbyVideo'); if (lv) lv.pause(); } catch (e) {} }, 500);
   try { if (!localStorage.getItem('bm-onboarded')) setTimeout(showHowto, 650); } catch (e) {}
 }
 function showWaitingBadge() {
@@ -1258,6 +1255,7 @@ if (inviteRoom) { roomInput.value = inviteRoom; joinBreathRoom(inviteRoom); }
 // ── Landing: self-contained animated color background (WebGL, no external service) ──
 (function () {
   const canvas = document.getElementById('auroraCanvas');
+  if (!canvas) return;   // landing now uses a looping video background instead of the shader
   const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
   if (!gl) { canvas.style.display = 'none'; return; }   // fall back to the gradient underneath
 
