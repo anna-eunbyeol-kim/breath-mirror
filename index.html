@@ -133,13 +133,10 @@
     position: fixed; inset: 0; z-index: 300; overflow: hidden; cursor: default;
     transition: opacity 0.4s; font-family: 'Pretendard', sans-serif; background: #0e1220;
   }
-  #lobbyVideo {
-    position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; object-fit: cover;
-    /* Some GPUs play the video but paint it black when it uses a hardware overlay.
-       Forcing it onto its own composited layer fixes that. */
-    transform: translateZ(0); -webkit-transform: translateZ(0);
-    will-change: transform; -webkit-backface-visibility: hidden; backface-visibility: hidden;
-  }
+  /* The <video> stays invisible and just decodes; we paint its frames onto <canvas>,
+     which composites normally (some GPUs render a plain <video> element as black). */
+  #lobbyVideo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; pointer-events: none; z-index: -2; }
+  #lobbyCanvas { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; display: block; }
   .glass-sharp {   /* fallback gradient — only seen if the video can't load */
     position: absolute; inset: 0; z-index: -1; background-size: cover; background-position: center;
     background-image:
@@ -334,6 +331,7 @@
 
 <div id="connBadge">💙 connected</div>
 <div id="lobby">
+  <canvas id="lobbyCanvas"></canvas>
   <video id="lobbyVideo" src="landing.mp4" autoplay muted loop playsinline preload="auto"></video>
   <div class="lobby-scrim"></div>
   <div class="lobby-ui">
@@ -918,7 +916,7 @@ function enterApp() {
   lobbyEl.style.opacity = '0';
   setTimeout(() => { lobbyEl.style.display = 'none'; }, 400);
   // stop the landing video once we're inside (frees decode work for the camera)
-  setTimeout(() => { try { ['lobbyVideo','lobbyVideoBlur'].forEach(id => { const lv = document.getElementById(id); if (lv) lv.pause(); }); } catch (e) {} }, 500);
+  setTimeout(() => { try { window.__lobbyCanvasStop && window.__lobbyCanvasStop(); const lv = document.getElementById('lobbyVideo'); if (lv) lv.pause(); } catch (e) {} }, 500);
   try { if (!localStorage.getItem('bm-onboarded')) setTimeout(showHowto, 650); } catch (e) {}
 }
 function showWaitingBadge() {
@@ -1346,6 +1344,31 @@ if (inviteRoom) { roomInput.value = inviteRoom; joinBreathRoom(inviteRoom); }
   });
   playAll();
   ['pointerdown', 'touchstart', 'keydown'].forEach(ev => window.addEventListener(ev, playAll, { once: true }));
+})();
+
+// Paint the landing video onto a <canvas> (works even when a plain <video> renders black).
+(function () {
+  const v = document.getElementById('lobbyVideo');
+  const c = document.getElementById('lobbyCanvas');
+  if (!v || !c) return;
+  const ctx = c.getContext('2d');
+  function resize() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    c.width = Math.max(2, Math.round(innerWidth * dpr));
+    c.height = Math.max(2, Math.round(innerHeight * dpr));
+  }
+  resize(); window.addEventListener('resize', resize);
+  let raf;
+  function frame() {
+    const W = c.width, H = c.height, vw = v.videoWidth, vh = v.videoHeight;
+    if (vw && vh) {
+      const s = Math.max(W / vw, H / vh), dw = vw * s, dh = vh * s;  // object-fit: cover
+      ctx.drawImage(v, (W - dw) / 2, (H - dh) / 2, dw, dh);
+    }
+    raf = requestAnimationFrame(frame);
+  }
+  raf = requestAnimationFrame(frame);
+  window.__lobbyCanvasStop = () => cancelAnimationFrame(raf);
 })();
 
 // TEMP video diagnostics — a small green box shows the <video> element's internal state.
