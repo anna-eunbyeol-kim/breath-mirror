@@ -41,8 +41,8 @@
 
   #status {
     position: fixed; bottom: 164px; left: 50%; transform: translateX(-50%);
-    color: rgba(255,255,255,0.4); font-size: 11px; letter-spacing: 0.18em;
-    text-transform: uppercase; font-family: 'Pretendard', sans-serif; font-weight: 700;
+    color: rgba(255,255,255,0.9); font-size: 11px; letter-spacing: 0;
+    font-family: 'Pretendard', sans-serif; font-weight: 700; text-shadow: 0 1px 8px rgba(0,0,0,0.35);
     pointer-events: none; white-space: nowrap; z-index: 50;
   }
 
@@ -56,10 +56,10 @@
 
   #btnGroup { position: fixed; top: 20px; right: 20px; z-index: 50; display: flex; gap: 8px; }
   #btnGroup button {
-    background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.4);
+    background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.4);
     color: rgba(255,255,255,0.9); padding: 8px 16px; font-size: 11px;
-    letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer;
-    border-radius: 4px; font-family: 'Pretendard', sans-serif; font-weight: 700; transition: all 0.15s;
+    letter-spacing: 0; cursor: pointer;
+    border-radius: 12px; font-family: 'Pretendard', sans-serif; font-weight: 700; transition: all 0.15s;
     backdrop-filter: blur(6px);
   }
   #btnGroup button:hover { background: rgba(255,255,255,0.2); }
@@ -69,7 +69,6 @@
     position: fixed; bottom: 0; left: 0; right: 0; height: 80px;
     display: flex; align-items: center; gap: 8px; padding: 8px 16px;
     z-index: 55; overflow-x: auto;
-    background: linear-gradient(to top, rgba(0,0,0,0.6), transparent);
   }
   #photoStrip::-webkit-scrollbar { display: none; }
   .photo-thumb {
@@ -84,7 +83,7 @@
   .save-btn {
     position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
     background: rgba(0,0,0,0.55); color: white; font-size: 10px;
-    letter-spacing: 0.1em; font-family: 'Pretendard', sans-serif; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0; font-family: 'Pretendard', sans-serif; font-weight: 700;
     opacity: 0; transition: opacity 0.15s;
   }
   .photo-thumb:hover .save-btn { opacity: 1; }
@@ -108,14 +107,14 @@
   #noteCard.show .note-inner { transform: scale(1) rotate(-1.5deg); }
   #noteCard .note-tag {
     font-family: 'Pretendard', sans-serif; font-weight: 700; font-size: 12px;
-    letter-spacing: 0.06em; color: #b0607a; text-align: center; padding: 4px 0 10px;
+    letter-spacing: 0; color: #57758C; text-align: center; padding: 4px 0 10px;
   }
-  #noteCard.live .note-tag::after { content: ' · ● LIVE'; color: #d0356a; font-size: 10px; letter-spacing: 0.1em; }
+  #noteCard.live .note-tag::after { content: ' · ● LIVE'; color: #356590; font-size: 10px; letter-spacing: 0; }
   #noteCard img { display: block; width: 100%; max-height: 64vh; object-fit: contain; border-radius: 3px; }
   #noteCard .note-actions { display: flex; gap: 8px; justify-content: center; margin-top: 12px; }
   #noteCard .note-actions button {
-    font-family: 'Pretendard', sans-serif; font-weight: 700; font-size: 11px; letter-spacing: 0.08em;
-    text-transform: uppercase; padding: 7px 14px; border-radius: 5px; cursor: pointer;
+    font-family: 'Pretendard', sans-serif; font-weight: 700; font-size: 11px; letter-spacing: 0;
+    padding: 7px 14px; border-radius: 12px; cursor: pointer;
     border: 1px solid rgba(0,0,0,0.15); background: #f3f3f3; color: #333; transition: all 0.15s;
   }
   #noteCard .note-actions button:hover { background: #e6e6e6; }
@@ -138,15 +137,6 @@
   #lobbyVideo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; pointer-events: none; z-index: -2; }
   #lobbyCanvas { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
   #lobbyFrostCanvas { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; display: block; pointer-events: none; }
-  .glass-sharp {   /* fallback gradient — only seen if the video can't load */
-    position: absolute; inset: 0; z-index: -1; background-size: cover; background-position: center;
-    background-image:
-      radial-gradient(38% 46% at 24% 30%, #ffd9a8, transparent 70%),
-      radial-gradient(40% 44% at 74% 26%, #ff9e86, transparent 72%),
-      radial-gradient(50% 50% at 60% 82%, #9fc27a, transparent 72%),
-      radial-gradient(42% 40% at 30% 78%, #ffb3c8, transparent 70%),
-      linear-gradient(160deg, #bfe0f5, #ffe6d8 55%, #f6ecd8);
-  }
   .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
   .glass-grain {
     position: absolute; inset: 0; mix-blend-mode: soft-light; opacity: 0.5; pointer-events: none;
@@ -179,8 +169,8 @@
   }
   .lobby-form .join input::placeholder { color: rgba(255,255,255,0.7); }
   .lobby-form .join button {
-    background: rgba(255,255,255,0.92); border: none; color: #b5643f; padding: 12px 20px;
-    border-radius: 12px; font-size: 13px; font-weight: 700; cursor: pointer;
+    background: rgba(255,255,255,0.92); border: none; color: #356590; padding: 12px 20px;
+    border-radius: 12px; font-size: 13px; font-weight: 700; letter-spacing: 0; cursor: pointer;
     font-family: 'Pretendard', sans-serif; transition: background 0.15s;
   }
   .lobby-form .join button:hover { background: #fff; }
@@ -205,7 +195,7 @@
     50%      { box-shadow: 0 0 16px 2px rgba(210,225,235,0.4); }
   }
   #connBadge.together { border-color: rgba(210,225,235,0.65); animation: badgePulse 2.6s ease-in-out infinite; }
-  #connBadge.away { border-color: rgba(255,180,185,0.45); color: rgba(255,222,224,0.9); animation: none; }
+  #connBadge.away { border-color: rgba(119,162,201,0.5); color: rgba(210,225,235,0.9); animation: none; }
   #connBadge.waiting { border-color: rgba(255,255,255,0.4); color: rgba(255,255,255,0.85); animation: none; cursor: pointer; }
   #connBadge.waiting:hover { background: rgba(0,0,0,0.6); }
 
@@ -217,7 +207,7 @@
     font-family: 'Pretendard', sans-serif; padding: 0;
   }
   #noteCard .note-nav button:hover { background: #e6e6e6; }
-  #noteCard .note-nav #noteCount { font-family: 'Pretendard', sans-serif; font-size: 11px; font-weight: 700; color: #b0607a; letter-spacing: 0.06em; }
+  #noteCard .note-nav #noteCount { font-family: 'Pretendard', sans-serif; font-size: 11px; font-weight: 700; color: #57758C; letter-spacing: 0; }
   #notesChip {
     position: fixed; left: 20px; bottom: 96px; z-index: 56; display: none; cursor: pointer;
     background: rgba(0,0,0,0.5); border: 1px solid rgba(210,225,235,0.4); color: #fff;
@@ -234,23 +224,24 @@
   }
   #howto.show { opacity: 1; pointer-events: auto; }
   .howto-card {
-    width: min(90vw, 360px); background: linear-gradient(165deg, #fff6ea, #ffe9ec);
+    width: min(90vw, 360px); background: #77A2C9;
     border-radius: 18px; padding: 30px 26px 20px; text-align: center;
-    box-shadow: 0 24px 70px rgba(120,80,60,0.4);
+    box-shadow: 0 24px 70px rgba(20,40,60,0.45);
     transform: translateY(12px) scale(0.97); transition: transform 0.3s; font-family: 'Pretendard', sans-serif;
   }
   #howto.show .howto-card { transform: none; }
-  .howto-icon { font-size: 50px; line-height: 1; }
-  .howto-title { margin-top: 14px; font-weight: 800; font-size: 19px; color: #b5503a; }
-  .howto-text { margin-top: 10px; font-size: 13px; line-height: 1.6; color: #6b5b52; min-height: 84px; }
+  .howto-icon { font-size: 54px; line-height: 1; min-height: 150px; display: flex; align-items: center; justify-content: center; }
+  .howto-img { height: 150px; width: auto; max-width: 230px; object-fit: contain; display: block; }
+  .howto-title { margin-top: 14px; font-weight: 800; font-size: 19px; letter-spacing: 0; color: #fff; }
+  .howto-text { margin-top: 10px; font-size: 13px; line-height: 1.6; letter-spacing: 0; color: rgba(15,28,45,0.82); min-height: 84px; }
   .howto-dots { display: flex; gap: 6px; justify-content: center; margin-top: 14px; }
-  .howto-dots span { width: 7px; height: 7px; border-radius: 50%; background: rgba(181,80,58,0.25); transition: all 0.2s; }
-  .howto-dots span.on { background: #c86a4c; width: 18px; border-radius: 4px; }
+  .howto-dots span { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,0.4); transition: all 0.2s; }
+  .howto-dots span.on { background: #fff; width: 18px; border-radius: 4px; }
   .howto-actions { display: flex; align-items: center; justify-content: space-between; margin-top: 18px; }
-  .ht-skip { background: none; border: none; color: #a58a7e; font-size: 12px; cursor: pointer; font-family: 'Pretendard', sans-serif; }
-  .ht-skip:hover { color: #7a5a41; }
-  .ht-next { background: #c86a4c; border: none; color: #fff; padding: 10px 20px; border-radius: 12px; font-size: 13px; font-weight: 700; cursor: pointer; font-family: 'Pretendard', sans-serif; }
-  .ht-next:hover { background: #b5503a; }
+  .ht-skip { background: none; border: none; color: rgba(255,255,255,0.8); font-size: 12px; letter-spacing: 0; cursor: pointer; font-family: 'Pretendard', sans-serif; }
+  .ht-skip:hover { color: #fff; }
+  .ht-next { background: #FFF6EA; border: none; color: #356590; padding: 10px 20px; border-radius: 12px; font-size: 13px; font-weight: 700; letter-spacing: 0; cursor: pointer; font-family: 'Pretendard', sans-serif; }
+  .ht-next:hover { background: #fff; }
 
   /* ── Mobile / small screens ── */
   @media (max-width: 600px) {
@@ -289,9 +280,9 @@
 <div id="breathRing"></div>
 <div id="countdown"></div>
 <div id="btnGroup">
-  <button id="leaveBtn">✎ leave mark</button>
-  <button id="undoBtn">↩ undo</button>
-  <button id="clearBtn">✕ clear</button>
+  <button id="leaveBtn">✎ Leave mark</button>
+  <button id="undoBtn">↩ Undo</button>
+  <button id="clearBtn">✕ Clear</button>
 </div>
 <div id="photoStrip"></div>
 <div id="flash"></div>
@@ -306,8 +297,8 @@
     </div>
     <img id="noteImg" alt="a note left for you" />
     <div class="note-actions">
-      <button id="noteSave">↓ save</button>
-      <button id="noteClose">✕ close</button>
+      <button id="noteSave">↓ Save</button>
+      <button id="noteClose">✕ Close</button>
     </div>
   </div>
 </div>
@@ -320,8 +311,8 @@
     <div class="howto-text" id="htText"></div>
     <div class="howto-dots" id="htDots"></div>
     <div class="howto-actions">
-      <button id="htSkip" class="ht-skip">skip</button>
-      <button id="htNext" class="ht-next">next</button>
+      <button id="htSkip" class="ht-skip">Skip</button>
+      <button id="htNext" class="ht-next">Next</button>
     </div>
   </div>
 </div>
@@ -337,7 +328,7 @@
       <label for="roomInput">Room name</label>
       <div class="join">
         <input id="roomInput" placeholder="our little room" autocomplete="off" autocapitalize="off" spellcheck="false" />
-        <button id="enterBtn">enter</button>
+        <button id="enterBtn">Enter</button>
       </div>
       <p class="hint">Enter a room name. You can start alone and invite your partner.</p>
       <div class="netstatus" id="netStatus"></div>
@@ -508,8 +499,8 @@ function renderFx() {
       const a = (1 - age / 550) * 0.85;
       const { x, y } = partnerCursor;
       const g = fxCtx.createRadialGradient(x, y, 0, x, y, 18);
-      g.addColorStop(0, `rgba(255,188,203,${a})`);
-      g.addColorStop(1, 'rgba(255,188,203,0)');
+      g.addColorStop(0, `rgba(119,162,201,${a})`);
+      g.addColorStop(1, 'rgba(119,162,201,0)');
       fxCtx.beginPath(); fxCtx.arc(x, y, 18, 0, Math.PI * 2); fxCtx.fillStyle = g; fxCtx.fill();
     } else {
       partnerCursor = null;
@@ -526,7 +517,7 @@ let fogFadeTimer = null;
 
 function scheduleFogFade() {
   clearTimeout(fogFadeTimer);
-  fogFadeTimer = setTimeout(() => { resetFog(); setStatus('blow on the screen'); }, FOG_LIFETIME_MS);
+  fogFadeTimer = setTimeout(() => { resetFog(); setStatus('Blow on the screen'); }, FOG_LIFETIME_MS);
 }
 
 // Fog blobs are generated in normalized (0..1) coords so a breath looks the
@@ -564,7 +555,7 @@ function landFog(blobs) {
   fogReady = true;
   scheduleFogFade();
   paintFogBlobs(blobs);
-  if (!countingDown) setStatus('pinch to draw');
+  if (!countingDown) setStatus('Pinch to draw');
 }
 
 function addFog(intensity) {
@@ -708,7 +699,7 @@ function startCountdown() {
   let count = 3;
   countdownEl.textContent = count;
   countdownEl.classList.add('show');
-  setStatus('get ready…');
+  setStatus('Get ready…');
   countTimer = setInterval(() => {
     count--;
     if (count > 0) {
@@ -737,7 +728,7 @@ function doCapture() {
     sharePhoto(snap);
     frameCtx.clearRect(0, 0, W, H);
     holdStart = null;
-    setStatus(fogReady ? 'pinch to draw' : 'blow on the screen');
+    setStatus(fogReady ? 'Pinch to draw' : 'Blow on the screen');
   }, 'image/png');
 }
 
@@ -797,7 +788,7 @@ hands.onResults(results => {
       if (!isDrawingStroke) { saveSnapshot(); isDrawingStroke = true; }
       eraseAt(fx, fy);
       recordLiveFrame();
-      setStatus('drawing…');
+      setStatus('Drawing…');
       return;
     } else {
       cursor.classList.remove('drawing');
@@ -815,12 +806,12 @@ hands.onResults(results => {
       if (!holdStart) holdStart = Date.now();
       const elapsed = Date.now() - holdStart;
       drawCaptureFrame(all[0], all[1], Math.min(elapsed/HOLD_MS, 1));
-      setStatus('📷 hold…');
+      setStatus('📷 Hold…');
       if (elapsed >= HOLD_MS) { holdStart = null; frameCtx.clearRect(0,0,W,H); startCountdown(); }
     } else {
       if (holdStart) { holdStart = null; frameCtx.clearRect(0,0,W,H); }
-      if (!fogReady) setStatus('blow on the screen');
-      else if (all.length >= 1) setStatus('pinch to draw');
+      if (!fogReady) setStatus('Blow on the screen');
+      else if (all.length >= 1) setStatus('Pinch to draw');
     }
   }
 });
@@ -868,8 +859,8 @@ async function startCamera() {
       width: 1280, height: 720
     });
     mpCam.start(); resize(); render();
-    setStatus('blow on the screen');
-  } catch(e) { setStatus('camera access needed'); }
+    setStatus('Blow on the screen');
+  } catch(e) { setStatus('Camera access needed'); }
 }
 
 // ── Buttons ───────────────────────────────────────────────────────────
@@ -889,7 +880,7 @@ document.getElementById('undoBtn').addEventListener('click', undo);
 document.getElementById('clearBtn').addEventListener('click', () => {
   resetFog();
   undoStack = [];
-  setStatus('blow on the screen');
+  setStatus('Blow on the screen');
   netSend({ t: 'clear' });
 });
 
@@ -915,14 +906,14 @@ function enterApp() {
   try { if (!localStorage.getItem('bm-onboarded')) setTimeout(showHowto, 650); } catch (e) {}
 }
 function showWaitingBadge() {
-  connBadge.textContent = '◌ ' + (currentRoom || '') + ' · tap to copy invite';
+  connBadge.textContent = '◌ ' + (currentRoom || '') + ' · Tap to copy invite';
   connBadge.classList.add('waiting');
   connBadge.classList.remove('together', 'away');
   connBadge.style.display = 'block';
 }
 function onPeerConnected() {
   connected = true;
-  connBadge.textContent = '💙 here together';
+  connBadge.textContent = '💙 Here together';
   connBadge.classList.add('together');
   connBadge.classList.remove('away', 'waiting');
   connBadge.style.display = 'block';
@@ -931,7 +922,7 @@ function onPeerConnected() {
 }
 function onPeerGone() {
   connected = false;
-  connBadge.textContent = '◌ ' + (currentRoom || '') + ' · tap to copy invite';
+  connBadge.textContent = '◌ ' + (currentRoom || '') + ' · Tap to copy invite';
   connBadge.classList.add('waiting');
   connBadge.classList.remove('together', 'away');
 }
@@ -975,7 +966,7 @@ function handleData(msg) {
       break;
     case 'wipe':    onRemoteWipe(msg.x, msg.y); break;
     case 'wipeEnd': onRemoteWipeEnd(); break;
-    case 'clear':   resetFog(); setStatus('blow on the screen'); break;
+    case 'clear':   resetFog(); setStatus('Blow on the screen'); break;
   }
 }
 
@@ -1117,7 +1108,7 @@ function openCardAt(idx) {
 function showNoteCard(data) {
   archiveNote(data);
   openCardAt(0);
-  setStatus('💌 left for you', 3500);
+  setStatus('💌 Left for you', 3500);
 }
 function loadSavedNote(room) {
   try { return localStorage.getItem('bm-note-' + room) || null; } catch (e) { return null; }
@@ -1148,7 +1139,7 @@ function showCloudNote(note) {
 }
 
 function leaveNote() {
-  if (!fogReady) { setStatus('write on the glass first', 2000); return; }
+  if (!fogReady) { setStatus('Write on the glass first', 2000); return; }
   // The cover (the still you keep and look at) is always high-res, like a photo.
   const hiCover = composeGlassHi(1920).toDataURL('image/jpeg', 0.85);
   // a "live" note if you just drew (last ~3s of motion frames), else a still photo
@@ -1167,27 +1158,34 @@ function leaveNote() {
   if (sendNote && connected) sendNote(payload);   // instant, if they're online now
   cloudSaveNote(currentRoom || 'solo', payload).then(ok => {
     const kind = note.type === 'live' ? 'live moment' : 'moment';
-    setStatus(ok ? 'left a ' + kind + ' for them · anytime 💙'
-                 : (connected ? 'sent to your partner 💙' : 'left on the glass 💙'), 4000);
+    setStatus(ok ? 'Left a ' + kind + ' for them · anytime 💙'
+                 : (connected ? 'Sent to your partner 💙' : 'Left on the glass 💙'), 4000);
   });
 }
 
 // ── First-run how-to walkthrough (step by step) ──
 const HOWTO = [
-  { icon: '👄', title: 'Fog it up', text: "Open your mouth, like breathing on cold glass — the mirror mists over. No mic, so chatting won't set it off." },
-  { icon: '🤏', title: 'Pinch to draw', text: 'Touch your thumb and index finger together and move your hand. Wipe a peek-hole, or draw a little heart in the fog.' },
+  { icon: '👄', img: 'ob-fog.png',   title: 'Fog it up', text: "Open your mouth, like breathing on cold glass — the mirror mists over. No mic, so chatting won't set it off." },
+  { icon: '🤏', img: 'ob-pinch.png', title: 'Pinch to draw', text: 'Touch your thumb and index finger together and move your hand. Wipe a peek-hole, or draw a little heart in the fog.' },
   { icon: '✌️', title: 'Snap a selfie', text: 'Make an "L" with both hands and hold ~1.5s — a 3·2·1 photo. It lands in the strip below.' },
-  { icon: '✎', title: 'Leave a mark', text: 'Fog up, draw something, then tap "leave mark". Your partner gets it — even the last second of you drawing, like a Live Photo.' },
+  { icon: '✎', img: 'ob-mark.png',   title: 'Leave a mark', text: 'Fog up, draw something, then tap "Leave mark". Your partner gets it — even the last second of you drawing, like a Live Photo.' },
   { icon: '💙', title: 'Be together', text: 'Share your room name or invite link. Same room = you both fog the very same glass, live.' },
 ];
 let htIdx = 0;
 function renderHowto() {
   const s = HOWTO[htIdx];
-  document.getElementById('htIcon').textContent = s.icon;
+  const ic = document.getElementById('htIcon');
+  ic.innerHTML = '';
+  if (s.img) {                                   // hand-drawn graphic (falls back to the emoji if the file is missing)
+    const im = document.createElement('img');
+    im.className = 'howto-img'; im.src = s.img; im.alt = '';
+    im.onerror = () => { ic.textContent = s.icon; };
+    ic.appendChild(im);
+  } else { ic.textContent = s.icon; }
   document.getElementById('htTitle').textContent = s.title;
   document.getElementById('htText').textContent = s.text;
   document.getElementById('htDots').innerHTML = HOWTO.map((_, i) => '<span class="' + (i === htIdx ? 'on' : '') + '"></span>').join('');
-  document.getElementById('htNext').textContent = htIdx === HOWTO.length - 1 ? 'let’s go ♡' : 'next';
+  document.getElementById('htNext').textContent = htIdx === HOWTO.length - 1 ? 'Let’s go ♡' : 'Next';
 }
 function showHowto() {
   htIdx = 0; renderHowto();
@@ -1218,7 +1216,7 @@ connBadge.addEventListener('click', () => {
   const link = location.origin + location.pathname + '#' + encodeURIComponent(currentRoom);
   if (navigator.clipboard) navigator.clipboard.writeText(link);
   connBadge.textContent = '✓ invite link copied';
-  setTimeout(() => { if (!connected) connBadge.textContent = '◌ ' + (currentRoom || '') + ' · tap to copy invite'; }, 1800);
+  setTimeout(() => { if (!connected) connBadge.textContent = '◌ ' + (currentRoom || '') + ' · Tap to copy invite'; }, 1800);
 });
 
 // Suggest a room name so one person can just share it.
