@@ -1365,35 +1365,13 @@ if (inviteRoom) { roomInput.value = inviteRoom; joinBreathRoom(inviteRoom); }
   const ctx = c.getContext('2d'), fctx = fc.getContext('2d');
   const LINES = ['Breath on the', 'same glass', 'even far apart'];
   let W = 2, H = 2;
-  // ── Hand-drawn landing cutout: her frame + headline + smiley, knocked out of the frost so the
-  //    sharp video shows through the drawing. Two masks (desktop / mobile); a mask's DARK pixels are
-  //    the clear peek-through, its white background becomes transparent (= stays frosted). ──
-  const maskImgs = {};                        // 'desktop' | 'mobile' -> loaded Image
-  let activeMask = null;                       // processed alpha canvas for the current size
-  function loadMask(key, src) { const img = new Image(); img.onload = () => { maskImgs[key] = img; buildMask(); }; img.src = src; }
-  function buildMask() {
-    const img = (W >= H ? maskImgs.desktop : maskImgs.mobile) || maskImgs.desktop || maskImgs.mobile;
-    if (!img) { activeMask = null; return; }
-    const m = document.createElement('canvas'); m.width = W; m.height = H;
-    const g = m.getContext('2d');
-    g.drawImage(img, 0, 0, W, H);              // stretch to the viewport so the hand-drawn frame hugs the edges
-    const d = g.getImageData(0, 0, W, H), p = d.data;
-    for (let i = 0; i < p.length; i += 4) {    // dark shape → opaque (clear), white bg → transparent (frosted)
-      const lum = p[i] * 0.299 + p[i + 1] * 0.587 + p[i + 2] * 0.114;
-      p[i] = p[i + 1] = p[i + 2] = 255; p[i + 3] = 255 - lum;
-    }
-    g.putImageData(d, 0, 0); activeMask = m;
-  }
   function resize() {
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     W = Math.max(2, Math.round(innerWidth * dpr));
     H = Math.max(2, Math.round(innerHeight * dpr));
     c.width = W; c.height = H; fc.width = W; fc.height = H;
-    buildMask();
   }
   resize(); window.addEventListener('resize', resize);
-  loadMask('desktop', 'mask-desktop.png');
-  loadMask('mobile', 'mask-mobile.png');
   let raf;
   function frame() {
     const vw = v.videoWidth, vh = v.videoHeight;
@@ -1409,16 +1387,13 @@ if (inviteRoom) { roomInput.value = inviteRoom; joinBreathRoom(inviteRoom); }
       fctx.filter = 'none';
       fctx.fillStyle = 'rgba(0,0,0,0.28)';
       fctx.fillRect(0, 0, W, H);                                 // frost tint (letters knocked out below)
-      fctx.globalCompositeOperation = 'destination-out';        // knock the hand-drawn cutout out of the frost
-      if (activeMask) {
-        fctx.drawImage(activeMask, 0, 0);                       // her frame + headline + smiley → sharp video shows through
-      } else {                                                  // fallback: draw the headline via code until the mask image loads
-        const sc = W / 1492;
-        fctx.fillStyle = '#000'; fctx.textBaseline = 'alphabetic';
-        fctx.font = '400 ' + (100 * sc) + "px 'Rubik Bubbles', system-ui, sans-serif";
-        let ty = 150 * sc;
-        for (const line of LINES) { fctx.fillText(line, 64 * sc, ty); ty += 89 * sc; }
-      }
+      const sc = W / 1492;                                       // match the 1492-wide Figma layout
+      fctx.globalCompositeOperation = 'destination-out';        // knock the letters out of the frost
+      fctx.fillStyle = '#000';
+      fctx.textBaseline = 'alphabetic';
+      fctx.font = '400 ' + (100 * sc) + "px 'Rubik Bubbles', system-ui, sans-serif";
+      let ty = 150 * sc;
+      for (const line of LINES) { fctx.fillText(line, 64 * sc, ty); ty += 89 * sc; }
       fctx.globalCompositeOperation = 'source-over';
     }
     raf = requestAnimationFrame(frame);
