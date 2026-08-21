@@ -345,7 +345,10 @@
       </mask>
     </defs>
     <foreignObject x="0" y="0" width="1492" height="839" mask="url(#frostHoles)">
-      <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%;background:rgba(0,0,0,0.28);-webkit-backdrop-filter:blur(37.5px);backdrop-filter:blur(37.5px);"></div>
+      <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%;position:relative;overflow:hidden;background:#0e1220">
+        <video id="lobbyVideoBlur" src="landing.mp4" autoplay muted loop playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:blur(34px);transform:scale(1.12)"></video>
+        <div style="position:absolute;inset:0;background:rgba(0,0,0,0.28)"></div>
+      </div>
     </foreignObject>
   </svg>
   <div class="glass-grain"></div>
@@ -929,7 +932,7 @@ function enterApp() {
   lobbyEl.style.opacity = '0';
   setTimeout(() => { lobbyEl.style.display = 'none'; }, 400);
   // stop the landing video once we're inside (frees decode work for the camera)
-  setTimeout(() => { try { const lv = document.getElementById('lobbyVideo'); if (lv) lv.pause(); } catch (e) {} }, 500);
+  setTimeout(() => { try { ['lobbyVideo','lobbyVideoBlur'].forEach(id => { const lv = document.getElementById(id); if (lv) lv.pause(); }); } catch (e) {} }, 500);
   try { if (!localStorage.getItem('bm-onboarded')) setTimeout(showHowto, 650); } catch (e) {}
 }
 function showWaitingBadge() {
@@ -1241,7 +1244,6 @@ connBadge.addEventListener('click', () => {
 
 // Suggest a room name so one person can just share it.
 roomInput.value = 'bm-' + Math.random().toString(36).slice(2, 7);
-setNetStatus('Enter a room name — you can start alone and invite your partner.');
 
 // Opened via an invite link (#room)? Prefill and drop straight in.
 const inviteRoom = decodeURIComponent((location.hash || '').replace(/^#/, '')).trim();
@@ -1345,14 +1347,19 @@ if (inviteRoom) { roomInput.value = inviteRoom; joinBreathRoom(inviteRoom); }
 // Make sure the landing video actually plays — muted autoplay is sometimes blocked,
 // so force play(), retry when it can play, and again on the first tap/click.
 (function () {
-  const lv = document.getElementById('lobbyVideo');
-  if (!lv) return;
-  lv.muted = true; lv.playsInline = true;
-  const go = () => { const p = lv.play(); if (p && p.catch) p.catch(() => {}); };
-  lv.addEventListener('loadeddata', go);
-  lv.addEventListener('canplay', go);
-  go();
-  ['pointerdown', 'touchstart', 'keydown'].forEach(ev => window.addEventListener(ev, go, { once: true }));
+  const ids = ['lobbyVideo', 'lobbyVideoBlur'];   // sharp (through the letters) + blurred (the frost)
+  const playAll = () => ids.forEach(id => {
+    const lv = document.getElementById(id);
+    if (!lv) return;
+    lv.muted = true; lv.playsInline = true;
+    const p = lv.play(); if (p && p.catch) p.catch(() => {});
+  });
+  ids.forEach(id => {
+    const lv = document.getElementById(id);
+    if (lv) { lv.addEventListener('loadeddata', playAll); lv.addEventListener('canplay', playAll); }
+  });
+  playAll();
+  ['pointerdown', 'touchstart', 'keydown'].forEach(ev => window.addEventListener(ev, playAll, { once: true }));
 })();
 
 startCamera();
