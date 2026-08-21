@@ -130,8 +130,7 @@
   /* ── Long-distance: connection lobby ── */
   /* ── Interactive glass landing (move cursor / finger to wipe the fog) ── */
   #lobby {
-    position: fixed; inset: 0; z-index: 300; overflow: hidden; cursor: crosshair;
-    --mx: 50%; --my: 38%;
+    position: fixed; inset: 0; z-index: 300; overflow: hidden; cursor: default;
     transition: opacity 0.4s; font-family: 'Pretendard', sans-serif; background: #0e1220;
   }
   #lobbyVideo {
@@ -147,17 +146,9 @@
       linear-gradient(160deg, #bfe0f5, #ffe6d8 55%, #f6ecd8);
   }
   /* the "fog": heavy blur + an Exclude wash over the video, wiped clear around the cursor */
-  .lobby-fog {
-    position: absolute; inset: 0; z-index: 1; pointer-events: none;
-    -webkit-backdrop-filter: blur(44px) saturate(1.12);
-            backdrop-filter: blur(44px) saturate(1.12);
-    -webkit-mask: radial-gradient(circle at var(--mx) var(--my), transparent 0, transparent 74px, #000 200px);
-            mask: radial-gradient(circle at var(--mx) var(--my), transparent 0, transparent 74px, #000 200px);
-  }
-  .lobby-fog::after {
-    content: ''; position: absolute; inset: 0;
-    background: rgba(196,203,220,0.5); mix-blend-mode: exclude;
-  }
+  /* Full-screen frost; the headline letters are punched out so the sharp video shows through them */
+  #lobbyFrost { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; pointer-events: none; }
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
   .glass-grain {
     position: absolute; inset: 0; mix-blend-mode: soft-light; opacity: 0.5; pointer-events: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
@@ -340,12 +331,26 @@
 <div id="lobby">
   <div class="glass-sharp"></div>
   <video id="lobbyVideo" src="landing.mp4" autoplay muted loop playsinline></video>
-  <div class="lobby-fog"></div>
+  <svg id="lobbyFrost" viewBox="0 0 1492 839" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <mask id="frostHoles">
+        <rect x="0" y="0" width="1492" height="839" fill="#fff"/>
+        <text x="64" y="150" fill="#000" font-family="'Rubik Bubbles', system-ui, sans-serif" font-size="100" font-weight="400">
+          <tspan x="64" dy="0">Fog up the</tspan>
+          <tspan x="64" dy="89">same glass</tspan>
+          <tspan x="64" dy="89">and</tspan>
+          <tspan x="64" dy="89">wipe it clear,</tspan>
+          <tspan x="64" dy="89">together</tspan>
+        </text>
+      </mask>
+    </defs>
+    <foreignObject x="0" y="0" width="1492" height="839" mask="url(#frostHoles)">
+      <div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%;background:rgba(0,0,0,0.28);-webkit-backdrop-filter:blur(37.5px);backdrop-filter:blur(37.5px);"></div>
+    </foreignObject>
+  </svg>
   <div class="glass-grain"></div>
+  <h1 class="sr-only">Fog up the same glass and wipe it clear, together</h1>
   <div class="lobby-ui">
-    <div class="lobby-head">
-      <h1>Fog up the same glass and wipe it clear, together</h1>
-    </div>
     <div class="lobby-form">
       <label for="roomInput">Room name</label>
       <div class="join">
