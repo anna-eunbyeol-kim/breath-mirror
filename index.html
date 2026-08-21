@@ -100,24 +100,27 @@
   }
   #noteCard.show { opacity: 1; pointer-events: auto; }
   #noteCard .note-inner {
-    background: #fff; padding: 12px 12px 14px; border-radius: 6px;
-    box-shadow: 0 24px 70px rgba(0,0,0,0.55); max-width: min(86vw, 460px);
-    transform: scale(0.94) rotate(-1.5deg); transition: transform 0.35s;
+    background: #77A2C9; padding: 14px 14px 12px; border-radius: 16px;
+    box-shadow: 0 24px 70px rgba(20,40,60,0.45); max-width: min(90vw, 460px);
+    transform: scale(0.94); transition: transform 0.35s; display: flex; flex-direction: column;
   }
-  #noteCard.show .note-inner { transform: scale(1) rotate(-1.5deg); }
+  #noteCard.show .note-inner { transform: scale(1); }
+  #noteCard .note-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 2px 4px 10px; }
   #noteCard .note-tag {
-    font-family: 'Pretendard', sans-serif; font-weight: 700; font-size: 12px;
-    letter-spacing: 0; color: #57758C; text-align: center; padding: 4px 0 10px;
+    font-family: 'Pretendard', sans-serif; font-weight: 700; font-size: 13px;
+    letter-spacing: 0; color: #fff;
   }
-  #noteCard.live .note-tag::after { content: ' · ● LIVE'; color: #356590; font-size: 10px; letter-spacing: 0; }
-  #noteCard img { display: block; width: 100%; max-height: 64vh; object-fit: contain; border-radius: 3px; }
-  #noteCard .note-actions { display: flex; gap: 8px; justify-content: center; margin-top: 12px; }
+  #noteCard.live .note-tag::after { content: ' · ● LIVE'; color: #FF9EA6; font-size: 10px; letter-spacing: 0; }
+  #noteCard img { display: block; width: 100%; max-height: 60vh; object-fit: contain; border-radius: 8px; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  #noteCard .note-actions { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; padding: 0 2px; }
   #noteCard .note-actions button {
-    font-family: 'Pretendard', sans-serif; font-weight: 700; font-size: 11px; letter-spacing: 0;
-    padding: 7px 14px; border-radius: 12px; cursor: pointer;
-    border: 1px solid rgba(0,0,0,0.15); background: #f3f3f3; color: #333; transition: all 0.15s;
+    font-family: 'Pretendard', sans-serif; font-weight: 700; font-size: 13px; letter-spacing: 0;
+    cursor: pointer; border-radius: 12px; transition: all 0.15s;
   }
-  #noteCard .note-actions button:hover { background: #e6e6e6; }
+  #noteClose { background: none; border: none; color: rgba(255,255,255,0.85); padding: 8px 4px; }
+  #noteClose:hover { color: #fff; }
+  #noteSave { background: #FFF6EA; border: none; color: #356590; padding: 10px 22px; }
+  #noteSave:hover { background: #fff; }
 
   /* ── Long-distance: photos shared from partner ── */
   .photo-thumb.partner { border-color: rgba(150,190,225,0.85); }
@@ -185,36 +188,46 @@
 
   #connBadge {
     position: fixed; top: 20px; left: 20px; z-index: 56; display: none;
-    background: rgba(0,0,0,0.5); border: 1px solid rgba(210,225,235,0.4);
-    color: rgba(255,255,255,0.9); padding: 7px 12px; border-radius: 20px;
-    font-size: 11px; font-family: 'Pretendard', sans-serif; font-weight: 700;
-    letter-spacing: 0.08em; backdrop-filter: blur(6px);
+    background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.40);
+    color: rgba(255,255,255,0.95); padding: 9px 16px; border-radius: 20px;
+    font-size: 12px; font-family: 'Pretendard', sans-serif; font-weight: 700;
+    letter-spacing: 0; -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px);
+  }
+  #connBadge::before {   /* status dot: red = waiting/alone, blue = together, amber = away */
+    content: ''; display: inline-block; width: 9px; height: 9px; border-radius: 50%;
+    margin-right: 9px; vertical-align: -1px; background: #F26B6B; box-shadow: 0 0 8px rgba(242,107,107,0.8);
   }
   @keyframes badgePulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(210,225,235,0); }
-    50%      { box-shadow: 0 0 16px 2px rgba(210,225,235,0.4); }
+    0%, 100% { box-shadow: 0 0 0 0 rgba(122,170,225,0); }
+    50%      { box-shadow: 0 0 22px 3px rgba(122,170,225,0.8); }
   }
-  #connBadge.together { border-color: rgba(210,225,235,0.65); animation: badgePulse 2.6s ease-in-out infinite; }
-  #connBadge.away { border-color: rgba(119,162,201,0.5); color: rgba(210,225,235,0.9); animation: none; }
-  #connBadge.waiting { border-color: rgba(255,255,255,0.4); color: rgba(255,255,255,0.85); animation: none; cursor: pointer; }
-  #connBadge.waiting:hover { background: rgba(0,0,0,0.6); }
+  @keyframes dotPulse {
+    0%, 100% { box-shadow: 0 0 5px rgba(122,170,225,0.6); }
+    50%      { box-shadow: 0 0 13px 2px rgba(122,170,225,1); }
+  }
+  #connBadge.together { border-color: rgba(122,170,225,0.7); animation: badgePulse 1.6s ease-in-out infinite; }
+  #connBadge.together::before { background: #6AA0E0; animation: dotPulse 1.6s ease-in-out infinite; }
+  #connBadge.away { border-color: rgba(119,162,201,0.6); }
+  #connBadge.away::before { background: #E0B15A; box-shadow: 0 0 8px rgba(224,177,90,0.7); }
+  #connBadge.waiting { cursor: pointer; }
+  #connBadge.waiting:hover { background: rgba(0,0,0,0.4); }
 
   /* Note browse (last 5) + reopen chip */
-  #noteCard .note-nav { display: flex; align-items: center; justify-content: center; gap: 14px; padding: 2px 0 10px; }
+  #noteCard .note-nav { display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.2); border-radius: 999px; padding: 3px 6px; }
   #noteCard .note-nav button {
-    background: #f3f3f3; border: 1px solid rgba(0,0,0,0.12); color: #555;
-    width: 26px; height: 26px; border-radius: 50%; font-size: 15px; line-height: 1; cursor: pointer;
-    font-family: 'Pretendard', sans-serif; padding: 0;
+    background: rgba(255,255,255,0.92); border: none; color: #356590;
+    width: 24px; height: 24px; border-radius: 50%; font-size: 14px; line-height: 1; cursor: pointer;
+    font-family: 'Pretendard', sans-serif; padding: 0; display: flex; align-items: center; justify-content: center;
   }
-  #noteCard .note-nav button:hover { background: #e6e6e6; }
-  #noteCard .note-nav #noteCount { font-family: 'Pretendard', sans-serif; font-size: 11px; font-weight: 700; color: #57758C; letter-spacing: 0; }
+  #noteCard .note-nav button:hover { background: #fff; }
+  #noteCard .note-nav #noteCount { font-family: 'Pretendard', sans-serif; font-size: 11px; font-weight: 700; color: #fff; letter-spacing: 0; padding: 0 2px; }
   #notesChip {
     position: fixed; left: 20px; bottom: 96px; z-index: 56; display: none; cursor: pointer;
-    background: rgba(0,0,0,0.5); border: 1px solid rgba(210,225,235,0.4); color: #fff;
-    padding: 7px 12px; border-radius: 20px; font-size: 12px; font-weight: 700;
-    font-family: 'Pretendard', sans-serif; letter-spacing: 0.04em; backdrop-filter: blur(6px);
+    background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.40); color: #fff;
+    padding: 9px 14px; border-radius: 20px; font-size: 12px; font-weight: 700;
+    font-family: 'Pretendard', sans-serif; letter-spacing: 0; -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px);
   }
-  #notesChip:hover { background: rgba(0,0,0,0.65); }
+  #notesChip:hover { background: rgba(0,0,0,0.4); }
 
   /* ── First-run how-to (reopen with "? how") ── */
   #howto {
@@ -289,16 +302,18 @@
 
 <div id="noteCard" hidden>
   <div class="note-inner">
-    <div class="note-tag">💌 left for you</div>
-    <div id="noteNav" class="note-nav" style="display:none">
-      <button id="notePrev" title="older">‹</button>
-      <span id="noteCount">1 / 1</span>
-      <button id="noteNext" title="newer">›</button>
+    <div class="note-head">
+      <div class="note-tag">Left for you</div>
+      <div id="noteNav" class="note-nav" style="display:none">
+        <button id="notePrev" title="older">‹</button>
+        <span id="noteCount">1 / 1</span>
+        <button id="noteNext" title="newer">›</button>
+      </div>
     </div>
     <img id="noteImg" alt="a note left for you" />
     <div class="note-actions">
-      <button id="noteSave">↓ Save</button>
-      <button id="noteClose">✕ Close</button>
+      <button id="noteClose">Close</button>
+      <button id="noteSave">Save</button>
     </div>
   </div>
 </div>
@@ -906,14 +921,14 @@ function enterApp() {
   try { if (!localStorage.getItem('bm-onboarded')) setTimeout(showHowto, 650); } catch (e) {}
 }
 function showWaitingBadge() {
-  connBadge.textContent = '◌ ' + (currentRoom || '') + ' · Tap to copy invite';
+  connBadge.textContent = (currentRoom || '') + ' · Tap to invite';
   connBadge.classList.add('waiting');
   connBadge.classList.remove('together', 'away');
   connBadge.style.display = 'block';
 }
 function onPeerConnected() {
   connected = true;
-  connBadge.textContent = '💙 Here together';
+  connBadge.textContent = 'Here fogether!';
   connBadge.classList.add('together');
   connBadge.classList.remove('away', 'waiting');
   connBadge.style.display = 'block';
@@ -922,7 +937,7 @@ function onPeerConnected() {
 }
 function onPeerGone() {
   connected = false;
-  connBadge.textContent = '◌ ' + (currentRoom || '') + ' · Tap to copy invite';
+  connBadge.textContent = (currentRoom || '') + ' · Tap to invite';
   connBadge.classList.add('waiting');
   connBadge.classList.remove('together', 'away');
 }
@@ -1031,16 +1046,11 @@ function parseNote(data) {
 
 let liveTimer = null;
 function stopLivePlayback() { if (liveTimer) { clearInterval(liveTimer); liveTimer = null; } }
-function playLive(img, frames, cover) {
+function playLive(img, frames) {
   stopLivePlayback();
   let i = 0; img.src = frames[0];
   liveTimer = setInterval(() => {
-    i++;
-    if (i >= frames.length) {                        // played the whole moment once
-      stopLivePlayback();
-      img.src = cover || frames[frames.length - 1];  // settle on the sharp hi-res still
-      return;
-    }
+    i = (i + 1) % frames.length;   // loop forever
     img.src = frames[i];
   }, LIVE_STEP_MS);
 }
@@ -1080,15 +1090,22 @@ function renderNoteIntoCard(note) {
   const img = document.getElementById('noteImg');
   stopLivePlayback();
   if (note.type === 'live' && note.frames && note.frames.length >= 2) {
-    card.dataset.url = note.cover || note.frames[note.frames.length - 1];
+    const cover = note.cover || note.frames[note.frames.length - 1];
+    card.dataset.url = cover;
     card.classList.add('live');
-    img.style.cursor = 'pointer'; img.title = 'tap to replay';
-    img.onclick = () => playLive(img, note.frames, card.dataset.url);
-    playLive(img, note.frames, card.dataset.url);
+    img.style.cursor = 'pointer'; img.title = 'hold to see the still';
+    // the video loops on its own; press-and-hold shows the still cover, release resumes it
+    const showStill = (e) => { if (e) e.preventDefault(); stopLivePlayback(); img.src = cover; };
+    const resume    = () => { playLive(img, note.frames); };
+    img.onclick = null; img.oncontextmenu = (e) => e.preventDefault();
+    img.onpointerdown = showStill;
+    img.onpointerup = resume; img.onpointerleave = resume; img.onpointercancel = resume;
+    playLive(img, note.frames);                       // starts looping immediately
   } else {
     card.dataset.url = note.cover;
     card.classList.remove('live');
-    img.onclick = null; img.style.cursor = ''; img.removeAttribute('title');
+    img.onclick = img.onpointerdown = img.onpointerup = img.onpointerleave = img.onpointercancel = img.oncontextmenu = null;
+    img.style.cursor = ''; img.removeAttribute('title');
     img.src = note.cover;
   }
 }
@@ -1213,8 +1230,8 @@ connBadge.addEventListener('click', () => {
   if (connected || !currentRoom) return;
   const link = location.origin + location.pathname + '#' + encodeURIComponent(currentRoom);
   if (navigator.clipboard) navigator.clipboard.writeText(link);
-  connBadge.textContent = '✓ invite link copied';
-  setTimeout(() => { if (!connected) connBadge.textContent = '◌ ' + (currentRoom || '') + ' · Tap to copy invite'; }, 1800);
+  connBadge.textContent = 'Invite link copied';
+  setTimeout(() => { if (!connected) connBadge.textContent = (currentRoom || '') + ' · Tap to invite'; }, 1800);
 });
 
 // Suggest a room name so one person can just share it.
