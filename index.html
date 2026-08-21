@@ -1342,6 +1342,19 @@ if (inviteRoom) { roomInput.value = inviteRoom; joinBreathRoom(inviteRoom); }
   window.addEventListener('pointercancel', stop);
 })();
 
+// Make sure the landing video actually plays — muted autoplay is sometimes blocked,
+// so force play(), retry when it can play, and again on the first tap/click.
+(function () {
+  const lv = document.getElementById('lobbyVideo');
+  if (!lv) return;
+  lv.muted = true; lv.playsInline = true;
+  const go = () => { const p = lv.play(); if (p && p.catch) p.catch(() => {}); };
+  lv.addEventListener('loadeddata', go);
+  lv.addEventListener('canplay', go);
+  go();
+  ['pointerdown', 'touchstart', 'keydown'].forEach(ev => window.addEventListener(ev, go, { once: true }));
+})();
+
 startCamera();
 </script>
 </body>
